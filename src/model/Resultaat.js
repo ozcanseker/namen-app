@@ -1,14 +1,20 @@
 class ResultScreenResultaat {
     constructor(url){
         this._url = url;
+
         this._naam = undefined;
         this._type = undefined;
+        this._geoJson = undefined;
 
         this._subscribers = [];
     }
 
-    setNaam(naam){
+    setSecondProperties(type, naam, geojson){
+        this._type = type;
         this._naam = naam;
+        this._geoJson = geojson;
+
+        this.upDateSubScribers();
     }
 
     getNaam(){
@@ -19,13 +25,12 @@ class ResultScreenResultaat {
         return this._url;
     }
 
-    setType(type){
-        this._type = type;
-        this.upDateSubScribers();
-    }
-
     getType(){
         return this._type;
+    }
+
+    getGeoJson(){
+        return this._geoJson;
     }
 
     upDateSubScribers(){
