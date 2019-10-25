@@ -191,4 +191,8 @@ ul {
   width: 60%;
 }
 
+table{
+  word-break: break-all;
+}
+
 

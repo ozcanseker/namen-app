@@ -83,7 +83,15 @@ export async function getAllAttribtes(clickedRes) {
         } else if (key === "http://www.w3.org/1999/02/22-rdf-syntax-ns#type") {
             types.push((stripUrlToType(value)));
         } else {
-            overigeAttributen.push({key: stripUrlToType(key), value: value});
+            key = stripUrlToType(key);
+
+            if(key === "isBAGwoonplaats" || key === "bebouwdeKom"){
+                console.log(value);
+                value = veranderNaarJaNee(value);
+                console.log(value);
+            }
+
+            overigeAttributen.push({key: (key), value: value});
         }
     }
 
@@ -112,6 +120,13 @@ export async function getAllAttribtes(clickedRes) {
      * Laad de attributen in de clicked res
      */
     clickedRes.loadInAttributes(naam, naamNl, naamFries, [indexes[0].type], overigeAttributen);
+}
+
+function veranderNaarJaNee(string){
+    if(string === "1"){
+        return "ja";
+    }
+    return "nee";
 }
 
 function seperateUpperCase(string) {

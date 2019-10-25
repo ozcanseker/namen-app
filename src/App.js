@@ -261,13 +261,13 @@ class App extends React.Component {
         }else if(match){
             this.state.results.clearClickedResult();
 
-            let timeout = 200;
+            let timeout = 100;
             let results = this.state.results;
 
             if(results.getResults().length > 40){
-                timeout = 1000;
+                timeout = 600;
             }else if(results.getResults().length > 20){
-                timeout = 400;
+                timeout = 200;
             } else if(results.getResults().length > 10){
                 timeout = 100;
             }
@@ -277,13 +277,18 @@ class App extends React.Component {
                 let width = bounds.getEast() - bounds.getWest();
                 let height = bounds.getNorth() - bounds.getSouth();
 
-                if(width > 1.8 || height > 1.5){
+                console.log(width);
+                console.log(height);
+
+                if(width > 1.8 || height > 1.3){
                     this.map.fitBounds(this.markerGroup.getBounds());
                 }else if(width > 1.3 || height > 1.0){
                     this.map.fitBounds(this.markerGroup.getBounds().pad(0.5));
                 }else if (width > 0.1 || height > 0.1){
                     this.map.fitBounds(this.markerGroup.getBounds().pad(0.8));
-                }else {
+                }else if(width > 0.01 || height > 0.01){
+                    this.map.fitBounds(this.markerGroup.getBounds().pad(5));
+                }else{
                     this.map.fitBounds(this.markerGroup.getBounds().pad(30));
                 }
 
@@ -310,9 +315,9 @@ class App extends React.Component {
             if(this.state.results.getClickedResult()){
                 timeout = 0;
             }else if(results.getResults().length > 40){
-                timeout = 1000;
+                timeout = 600;
             }else if(results.getResults().length > 20){
-                timeout = 400;
+                timeout = 200;
             } else if(results.getResults().length > 10){
                 timeout = 100;
             }
