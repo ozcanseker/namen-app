@@ -1,15 +1,24 @@
-class ResultScreenResultaat {
-    constructor(url){
+/**
+ * Een resultaat op het resultaten scherm.
+ */
+class Resultaat {
+    constructor(url , naam, type, geoJson){
         this._url = url;
 
-        this._naam = undefined;
-        this._type = undefined;
-        this._geoJson = undefined;
+        this._naam = naam;
+        this._type = type;
+        this._geoJson = geoJson;
 
         this._subscribers = [];
     }
 
-    setSecondProperties(type, naam, geojson){
+    /**
+     * Wordt gebruikt om de rest van de attributen in te laden
+     * @param naam string
+     * @param type string
+     * @param geojson GeoJson
+     */
+    setSecondProperties(naam, type, geojson){
         this._type = type;
         this._naam = naam;
         this._geoJson = geojson;
@@ -46,6 +55,18 @@ class ResultScreenResultaat {
             return subscriberList !== subscriber;
         });
     }
+
+    /**
+     * Geeft een feature object terug met zichzelf en geojson
+     * @returns {{geometry: GeoJson, type: string, properties: Resultaat}}
+     */
+    getAsFeature(){
+        return  {
+            type: "Feature",
+            properties: this,
+            geometry: this.getGeoJson()
+        }
+    }
 }
 
-export default ResultScreenResultaat;
+export default Resultaat;

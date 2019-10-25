@@ -1,3 +1,8 @@
+/**
+ * Test file om string bewerking mee uit te testen.
+ * @type {string}
+ */
+
 let st = "AaaaaAaaa";
 seperateUpperCase(st);
 console.log();

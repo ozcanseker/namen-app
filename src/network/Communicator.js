@@ -4,23 +4,40 @@ import getIndexOfClasses from './allClasses'
 
 let latestString = "";
 
+/**
+ * Vind een match. Dit zoekt op exact en contains.
+ * @param text de geschreven text.
+ *
+ * Als je het opnieuw wilt implementeren moet deze er in blijven. Je zal een string krijgen
+ * @returns {Promise<string|undefined>}
+ */
 export async function getMatch(text) {
     latestString = text;
 
-    let exactMatch = await queryTriply(nameQueryExactMatch(firstLetterCapital(text)));
     // let exactMatch = await queryPDOK(nameQueryExactMatchPDOK(firstLetterCapital(text)));
+    let exactMatch = await queryTriply(nameQueryExactMatch(firstLetterCapital(text)));
+    exactMatch = await exactMatch.text();
+    exactMatch = makeSearchScreenResults(JSON.parse(exactMatch));
+
+    if (latestString !== text) {
+        return undefined;
+    } else if (exactMatch.status > 300) {
+        return "error";
+    }
+    // else if(exactMatch.length > 35){
+    //     return exactMatch;
+    // }
+
     let result = await queryTriply(nameQueryForRegexMatch(text));
 
     if (latestString !== text) {
         return undefined;
-    } else if (result.status > 300 || exactMatch.status > 300) {
+    } else if (result.status > 300) {
         return "error";
     }
 
-    exactMatch = await exactMatch.text();
     result = await result.text();
 
-    exactMatch = makeSearchScreenResults(JSON.parse(exactMatch));
     result = makeSearchScreenResults(JSON.parse(result));
 
     return mergeResults(exactMatch, result);
@@ -94,7 +111,7 @@ export async function getAllAttribtes(clickedRes) {
     /**
      * Laad de attributen in de clicked res
      */
-    clickedRes.loadInAttributes(naam, naamNl, naamFries, types, overigeAttributen);
+    clickedRes.loadInAttributes(naam, naamNl, naamFries, [indexes[0].type], overigeAttributen);
 }
 
 function seperateUpperCase(string) {
@@ -259,7 +276,7 @@ function nameQueryForRegexMatch(queryString) {
               
               FILTER(REGEX(?label, "${queryString}", "i") || REGEX(?naamNl, "${queryString}", "i") || REGEX(?naamFries, "${queryString}", "i")).
             }
-            LIMIT 20
+            LIMIT 31
             `
 }
 

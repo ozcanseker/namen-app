@@ -1,7 +1,9 @@
 import React from 'react';
 import {Route, Switch} from 'react-router-dom';
 
-
+/**
+ * De bar met <-- terug.
+ */
 class NavBar extends React.Component{
     render() {
         return(

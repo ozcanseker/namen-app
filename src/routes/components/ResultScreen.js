@@ -16,7 +16,9 @@ class ResultScreen extends React.Component {
                 pElementSub = (<p className= "subText">{res.getType() ? res.getType() : String.fromCharCode(32)}</p>);
             }
 
-            return (<li key={res.getUrl() + res.getNaam()} className="liResultScreen">
+            return (<li key={res.getUrl() + res.getNaam()}
+                        className="liResultScreen"
+                        onClick={() => {this.props.onClickItem(res)}}>
                 {pElementHoofd}
                 {pElementSub}
             </li>)

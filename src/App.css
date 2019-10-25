@@ -22,14 +22,26 @@ body, .App, #root {
   flex-direction: row;
 }
 
+.mapHolder {
+  flex: 1.5;
+  border: skyblue 2px solid;
+  border-top: skyblue 4px solid;
+  display: flex;
+}
+
+.mapHolderLoading {
+  flex: 1.5;
+  border: skyblue 2px solid;
+  border-top: skyblue 0px solid;
+  display: flex;
+  flex-direction: column;
+}
+
 /**
 Map
  */
 #map {
-  flex: 1.5;
-  width: 100%;
-  height: 100%;
-  border: skyblue 2px solid;
+  flex: 1;
 }
 
 /*
@@ -77,10 +89,18 @@ Linker deel resultaten stuk
 
 .resultsContainer {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow: auto;
   border: solid skyblue 2px;
   border-radius: 10px;
   margin: 2% 7%;
+}
+
+.resultPartContainer {
+  flex: 1;
+  overflow: auto;
+
 }
 
 .backButton {
@@ -132,8 +152,43 @@ ul {
   margin-bottom: 0%;
 }
 
+.marker {
+  text-align: center;
+}
 
 .subText{
   font-size: 80%;
 }
+
+.subTextMarker{
+  font-size: 60%;
+}
+
+.objectScreen {
+  padding: 5%;
+}
+
+.objectScreen > h1{
+  margin-bottom: 1%;
+}
+
+.objectScreen > h3{
+  color: #2C84CB;
+  margin: 1% 0% 3%;
+}
+
+.namenTable {
+  margin-bottom: 2%;
+}
+
+.attributeSectionObjectScreen {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.attributeSectionObjectScreen td:last-child{
+  overflow-wrap: break-word;
+  width: 60%;
+}
+
 
