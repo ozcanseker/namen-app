@@ -311,9 +311,6 @@ class App extends React.Component {
      * Wanneer er op de terug knop wordt geklikt in de applicatie aka <-- terug.
      **/
     handleOnBackButtonClick = () => {
-        //ga eerst een pagina terug
-        this.props.history.goBack();
-
         /**
          * Kijk of je op een resultaat scherm bent
          */
@@ -327,6 +324,9 @@ class App extends React.Component {
         if (this.props.location.pathname === "/result") {
             this.handleDeleteClick();
         } else if (match) {
+            //ga eerst een pagina terug
+            this.props.history.goBack();
+
             //Als je op een geklikte resultaat scherm bent ga dan terug naar de result scherm
             this.state.results.clearClickedResult();
 
@@ -339,9 +339,6 @@ class App extends React.Component {
                     let bounds = this.markerGroup.getBounds();
                     let width = bounds.getEast() - bounds.getWest();
                     let height = bounds.getNorth() - bounds.getSouth();
-
-                    console.log(height);
-                    console.log(width);
 
                     //gebasseerd op breedte en lengte zoom uit
                     if (width > 1.8 || height > 1.3) {
