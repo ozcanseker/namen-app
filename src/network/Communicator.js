@@ -25,7 +25,6 @@ export async function getMatch(text) {
 
     // let exactMatch = await queryPDOK(nameQueryExactMatchPDOK(firstLetterCapital(text)));
     let exactMatch = await queryTriply(nameQueryExactMatch(firstLetterCapital(text)));
-    console.log(firstLetterCapital(text));
     //zet deze om in een array met Resultaat.js
     exactMatch = await exactMatch.text();
     exactMatch = makeSearchScreenResults(JSON.parse(exactMatch));
@@ -90,7 +89,11 @@ export async function getAllAttribtes(clickedRes) {
         let key = stripUrlToType(nodes[i].prd.value);
         let value = nodes[i].obj.value;
 
-        if (key === "naam") {
+        if (key === "naam" || key === "brugnaam" || key === "tunnelnaam" || key === "sluisnaam" || key === "knooppuntnaam") {
+            if(key !== "naam"){
+                value = value.replace(/\|/g, "");
+            }
+
             naam = value;
         } else if (key === "naamNL") {
             naamNl = value;
@@ -205,9 +208,21 @@ function makeSearchScreenResults(results) {
                 let type;
                 let geojson;
 
-                //kijk of het resultaat niet undefined is. Kijk ook of het gezochte string een deel van de naam bevat.
-                //Dit heb je nodig want bijvoorbeeld bij frieze namen moet de applicatie de frieze naam laten zien.
-                if (res.naamFries && res.naamFries.value.toUpperCase().includes(latestString.toUpperCase())) {
+                if(res.brugnaam || res.tunnelnaam || res.sluisnaam || res.knooppuntnaam){
+                    if(res.brugnaam){
+                        naamPlaats = res.brugnaam.value;
+                    }else if(res.tunnelnaam){
+                        naamPlaats = res.tunnelnaam.value;
+                    }else if(res.sluisnaam){
+                        naamPlaats = res.sluisnaam.value;
+                    }else{
+                        naamPlaats = res.knooppuntnaam.value;
+                    }
+
+                    naamPlaats = naamPlaats.replace(/\|/g, "");
+                }else if (res.naamFries && res.naamFries.value.toUpperCase().includes(latestString.toUpperCase())) {
+                    //kijk of het resultaat niet undefined is. Kijk ook of het gezochte string een deel van de naam bevat.
+                    //Dit heb je nodig want bijvoorbeeld bij frieze namen moet de applicatie de frieze naam laten zien.
                     naamPlaats = res.naamFries.value;
                 } else if (res.naamNl && res.naamNl.value.toUpperCase().includes(latestString.toUpperCase())) {
                     naamPlaats = res.naamNl.value;
@@ -330,7 +345,7 @@ function nameQueryExactMatch(query) {
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
             
             SELECT distinct * WHERE {
-              {?obj brt:naamNL "${query}".} union {?obj brt:naam "${query}".} union {?obj brt:naamFries "${query}".} 
+              {?obj brt:naamNL "${query}".} union {?obj brt:naam "${query}".} union {?obj brt:naamFries "${query}".} UNION {?obj brt:brugnaam "|${query}|"}  UNION {?obj brt:tunnelnaam "|${query}|"} UNION {?obj brt:sluisnaam "|${query}|"} UNION {?obj brt:knooppuntnaam "|${query}|"} UNION {?obj brt:naamOfficieel  "|${query}|"}.
             }
 `
     //
@@ -353,7 +368,7 @@ function nameQueryForRegexMatch(queryString) {
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
             
             SELECT distinct ?obj WHERE {
-            { ?obj brt:naam ?label } UNION { ?obj brt:naamNL ?label } UNION {?obj brt:naamFries ?label}.
+            { ?obj brt:naam ?label } UNION { ?obj brt:naamNL ?label } UNION {?obj brt:naamFries ?label} UNION {?obj brt:brugnaam ?label}  UNION {?obj brt:tunnelnaam ?label} UNION {?obj brt:sluisnaam ?label} UNION {?obj brt:knooppuntnaam ?label} UNION {?obj brt:naamOfficieel ?label}.
               
               FILTER(REGEX(?label, "${queryString}", "i")).
             }
@@ -373,6 +388,10 @@ function queryForType(queryString) {
               Optional{<${queryString}> brt:naam ?naam.}.
               Optional{<${queryString}> brt:naamNL ?naamNl.}.
               Optional{<${queryString}> brt:naamFries ?naamFries}.
+              Optional{<${queryString}> brt:knooppuntnaam ?knooppuntnaam.}.
+              Optional{<${queryString}> brt:sluisnaam ?sluisnaam.}.
+              Optional{<${queryString}> brt:tunnelnaam ?tunnelnaam}.
+              Optional{<${queryString}> brt:brugnaam ?brugnaam.}.
               Optional{<${queryString}> geo:hasGeometry/geo:asWKT ?wktJson}.       
             }`
 }
