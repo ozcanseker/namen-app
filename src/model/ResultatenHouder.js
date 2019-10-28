@@ -13,6 +13,12 @@ class ResultatenHouder {
         this._subscribers.map(subscriber => subscriber.update());
     }
 
+    /**
+     * Subscribe aan de resultaten houder.
+     * De gesubscribte class moet update implementeren.
+     * vergeet ook niet om te unsubscriben.
+     * @param subscriber
+     */
     subscribe(subscriber){
         this._subscribers.push(subscriber);
     }

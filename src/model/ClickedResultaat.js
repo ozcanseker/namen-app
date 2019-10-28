@@ -1,12 +1,12 @@
 /**
  * Het resultaat dat aangeklikt is.
- * De constructor wordt alleen een Resultaat scherm meegegeven.
- * loadInAttributes om de rest in te laden.
+ * Kan op twee manieren gegevens in laden. Met de constructor of de methode loadInAttributes.
  */
 class ClickedResultaat {
-    constructor(res, naam, naamNl, naamFries, types, overige){
+    constructor(res, naam, naamOfficieel, naamNl, naamFries, types, overige){
         this._res = res;
         this._naam = naam;
+        this._naamOfficieel = naamOfficieel;
         this._naamNL = naamNl;
         this._naamFries = naamFries;
 
@@ -25,7 +25,9 @@ class ClickedResultaat {
         }
 
         if(this._naam === undefined){
-            if(this._naamNL !== undefined){
+            if(this._naamOfficieel !== undefined){
+                this._naam = naamOfficieel;
+            }else if(this._naamNL !== undefined){
                 this._naam = this._naamNL;
             }else{
                 this._naam = this._naamFries;
@@ -46,23 +48,27 @@ class ClickedResultaat {
     /**
      *
      * @param naam String
+     * @param naamOfficieel String
      * @param naamnl String
      * @param naamfries String
      * @param type array Strings
      * @param overige array {key: string, value: string}
      */
-    loadInAttributes(naam, naamnl, naamfries, type,  overige){
+    loadInAttributes(naam, naamOfficieel, naamnl, naamfries, type,  overige){
         this._naam = naam;
+        this._naamOfficieel = naamOfficieel;
         this._naamNL = naamnl;
         this._naamFries = naamfries;
         this._types = type;
         this._overige = overige;
 
         let url = this._res.getUrl();
-        this._overige.unshift({key : "brt link",value: url})
+        this._overige.unshift({key : "brt link",value: url});
 
         if(this._naam === undefined){
-            if(this._naamNL !== undefined){
+            if(this._naamOfficieel !== undefined){
+                this._naam = this._naamOfficieel;
+            }else if(this._naamNL !== undefined){
                 this._naam = this._naamNL;
             }else{
                 this._naam = this._naamFries;
@@ -74,6 +80,11 @@ class ClickedResultaat {
         this._subscribers.map(subscriber => subscriber.update());
     }
 
+    /**
+     * Als je wilt subscriben moet je de methode update implementeren.
+     * Ook niet vergeten om te unsubscriben.
+     * @param subscriber
+     */
     subscribe(subscriber){
         this._subscribers.push(subscriber);
     }
@@ -82,6 +93,10 @@ class ClickedResultaat {
         this._subscribers.filter(subscriberList  => {
             return subscriberList !== subscriber;
         });
+    }
+
+    getNaamOfficieel(){
+        return this._naamOfficieel;
     }
 
     getUrl(){

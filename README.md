@@ -12,3 +12,4 @@ De communicator heeft de functies getMatch en getAllAttribtes die erin moeten bl
 ## Problemen
 - Layering van getekende polygonen.
 - On Hover doet soms raar wanneer je over een provincie hovert.
+- De brugnaam, tunnelnaam, sluisnaam, knooppuntnaam worden nog niet meegenomen in de zoekfunctie. 

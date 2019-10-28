@@ -14,6 +14,10 @@ class ObjectScreen extends React.Component {
         this.getNamenGegevens(this.props.clickedResult);
     }
 
+    /**
+     * Alle alle gegevens op van de clickedResult.
+     * @param url
+     */
     getNamenGegevens = (url) => {
         if (url) {
             Communicator.getAllAttribtes(this.props.clickedResult).then(res => {
@@ -37,12 +41,22 @@ class ObjectScreen extends React.Component {
 
             let naamNl;
             let naamFries;
+            let naamOfficeel;
 
             if (res.getNaamFries()) {
                 naamFries = (
                     <tr>
                         <td><b>Naam Fries:</b></td>
                         <td>{res.getNaamFries()}</td>
+                    </tr>
+                )
+            }
+
+            if(res.getNaamOfficieel()){
+                naamOfficeel = (
+                    <tr>
+                        <td><b>Naam officieel:</b></td>
+                        <td>{res.getNaamOfficieel()}</td>
                     </tr>
                 )
             }
@@ -60,6 +74,7 @@ class ObjectScreen extends React.Component {
                 <div>
                     <table className="namenTable">
                         <tbody>
+                            {naamOfficeel}
                             {naamNl}
                             {naamFries}
                         </tbody>
