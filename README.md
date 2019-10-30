@@ -13,3 +13,5 @@ De communicator heeft de functies getMatch en getAllAttribtes die erin moeten bl
 - Layering van getekende polygonen.
 - On Hover doet soms raar wanneer je over een provincie hovert.
 - De brugnaam, tunnelnaam, sluisnaam, knooppuntnaam worden nog niet meegenomen in de zoekfunctie. 
+- In de attribuutnaam isBAGwoonplaats zitten nu allemaal spaties: “is b a gwoonplaats”. Als de tekst van de attribuutnaam handmatig ingesteld kan worden, dan zou ik willen voorstellen er “BAG-woonplaats” van te maken, dus zonder het woordje ‘is’ ervoor.
+- Zou bij objecten in de objectklasse gebouw, inrichtingselement en functioneel gebied het attribuut ‘soortnaam’ bovenaan gezet kunnen worden? Dit geeft extra informatie over het object, bijv. bij treinstation dat het gaat om een museumtreinstation (zie treinstation Simpelveld).
