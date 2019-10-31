@@ -4,6 +4,7 @@
 class ResultatenHouder {
     constructor(){
         this._results = [];
+        this._doubleClickedResults = [];
         this._clickedResult = undefined;
 
         this._subscribers = [];
@@ -69,6 +70,12 @@ class ResultatenHouder {
 
         this._results = [];
 
+        this._doubleClickedResults.forEach(res => {
+            res.unsubscribe(this);
+        })
+
+        this._doubleClickedResults = [];
+
         this.upDateSubScribers();
     }
 
@@ -107,6 +114,41 @@ class ResultatenHouder {
         this.upDateSubScribers();
     }
 
+    /**
+     * Zet results en subscribe aan al deze
+     * @param results
+     */
+    setDoubleResults(results){
+
+        this._doubleClickedResults.forEach(res => {
+            res.unsubscribe(this);
+        })
+
+        results.forEach(res => {
+            res.subscribe(this);
+        })
+
+        this._doubleClickedResults = results;
+        this.upDateSubScribers();
+    }
+
+    getDoubleResults(){
+        return this._doubleClickedResults;
+    }
+
+    /**
+     * Clear de resultaten
+     */
+    clearDoubleResults(){
+        this._doubleClickedResults.forEach(res => {
+            res.unsubscribe(this);
+        })
+
+        this._doubleClickedResults = [];
+
+        this.upDateSubScribers();
+    }
+
     update(){
         this.upDateSubScribers();
     }
@@ -115,11 +157,22 @@ class ResultatenHouder {
      * Krijg alle resultaten behalve clicked resultaat als feature terug.
      * @returns {[Feature]}
      */
-    getAllObjectsAsFeature(){
+    getSearchedAllObjectsAsFeature(){
         let geojson = [];
 
         this._results.forEach(res => {
             if(res.getGeoJson()) {
+                geojson.push(res.getAsFeature());
+            }
+        })
+        return geojson;
+    }
+
+    getClickedAllObjectsAsFeature(){
+        let geojson = [];
+
+        this._doubleClickedResults.forEach(res => {
+            if(res.getGeoJson() && res.getType() !== "Land" && res.getType() !== "Provincie") {
                 geojson.push(res.getAsFeature());
             }
         })

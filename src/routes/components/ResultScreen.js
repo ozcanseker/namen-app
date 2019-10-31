@@ -2,7 +2,8 @@ import React from 'react';
 
 class ResultScreen extends React.Component {
     render() {
-        let results = this.props.res.getResults();
+
+        let results = this.props.res.getDoubleResults().length > 0 ? this.props.res.getDoubleResults() : this.props.res.getResults();
 
         let elements = results.map(res => {
             let pElementHoofd = (<p className= "hoofdText">&nbsp;</p>)

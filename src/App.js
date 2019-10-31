@@ -9,7 +9,7 @@ import * as turf from '@turf/turf';
  * UI
  */
 import Routes from './routes/Routes'
-import {Search, Icon} from 'semantic-ui-react'
+import {Search, Icon, Dropdown} from 'semantic-ui-react'
 import NavBar from "./components/NavBar";
 import Loader from "./components/Loader"
 
@@ -39,7 +39,8 @@ class App extends React.Component {
             searchQuery: "",
             isFetching: false,
             results: new ResultatenHouder(),
-            updateIng: false
+            updateIng: false,
+            currentSelected: "tsp"
         }
 
         //subscribe aan de resulatatenHouder
@@ -78,8 +79,7 @@ class App extends React.Component {
 
         //Wanneer je dubbelklikt op de kaart krijg dan alle locaties terug er om heen.
         //TODO werkt nog niet
-        this.map.on('dblclick', this.handleDoubleClick);
-        this.map.doubleClickZoom.disable();
+        this.map.on('contextmenu', this.handleRightMouseClick);
 
         //zet de geojson layer en de functies die worden aangeroepen.
         //On each feature elke geojson object
@@ -98,9 +98,42 @@ class App extends React.Component {
      * Als je op de dubbel klikt op de kaart krijg je alle nabije namen.
      * Moet nog geimplemteert worden.
      **/
-    handleDoubleClick(e) {
+    handleRightMouseClick = (e) => {
         let latLong = e.latlng;
-        console.log(latLong);
+
+        let match = matchPath(this.props.location.pathname, {
+            path: "/result/:id",
+            exact: true,
+            strict: true
+        })
+
+        this.setState({
+            searchQuery : ""
+        })
+        this.state.results.clearAll();
+
+        if(match){
+            this.props.history.goBack();
+        } else if (this.props.location.pathname !== "/result") {
+            this.props.history.push(`/result`);
+        }
+
+        let bounds = this.map.getBounds();
+
+        this.setState({
+            isFetching: true
+        })
+
+        Communicator.getFromCoordinates(latLong.lat, latLong.lng, bounds.getNorth(), bounds.getWest(), bounds.getSouth(), bounds.getEast()).then(res => {
+            if(res === "error"){
+
+            }else if(res !== undefined){
+                this.state.results.setDoubleResults(res);
+                this.setState({
+                    isFetching: false
+                })
+            }
+        });
     }
 
     /**
@@ -235,6 +268,7 @@ class App extends React.Component {
 
             //haal vorige resultaten weg
             this.state.results.clearClickedResult();
+            this.state.results.clearDoubleResults();
 
             //roep de methode aan die de zoek functie aanroept
             this.doSearch(text);
@@ -282,7 +316,7 @@ class App extends React.Component {
         /**
          * Roep de getMatch functie aan van de communicator
          **/
-        Communicator.getMatch(text.trim()).then(res => {
+        Communicator.getMatch(text.trim(), this.state.currentSelected).then(res => {
             //als je een error terug krijgt, dan betekent dat je wel een antwoord hebt maar dat het niet werkt.
             if (res === "error") {
                 this.setState({
@@ -320,8 +354,14 @@ class App extends React.Component {
             strict: true
         })
 
-        //Als je op de result screen bent ga dan terug naar het hoofdscherm
-        if (this.props.location.pathname === "/result") {
+        if(this.state.results.getDoubleResults().length > 1 && !match){
+            this.state.results.clearDoubleResults();
+
+            if(this.state.searchQuery === ""){
+                this.props.history.goBack();
+            }
+        }else if (this.props.location.pathname === "/result") {
+            //Als je op de result screen bent ga dan terug naar het hoofdscherm
             this.handleDeleteClick();
         } else if (match) {
             //ga eerst een pagina terug
@@ -368,7 +408,7 @@ class App extends React.Component {
         let timeout = 100;
         let results = this.state.results;
 
-        if (results.getResults().length > 40) {
+        if (results.getResults().length > 40 || results.getDoubleResults().length > 1) {
             timeout = 600;
         } else if (results.getResults().length > 20) {
             timeout = 200;
@@ -414,6 +454,17 @@ class App extends React.Component {
         }
     }
 
+    dropDownSelector = (e, v) => {
+        if(this.state.currentSelected !== v.value){
+            this.setState({
+                currentSelected : v.value,
+                isFetching : false
+            }, () => {
+                this.handleDeleteClick();
+            })
+        }
+    }
+
     /**
      * Update de kaart.
      **/
@@ -428,10 +479,13 @@ class App extends React.Component {
         if (this.state.results.getClickedResult()) {
             let feature = this.state.results.getClickedResult().getAsFeature();
             this.geoJsonLayer.addData(feature);
+        }else if(this.state.results.getDoubleResults().length > 0){
+            let geoJsonResults = results.getClickedAllObjectsAsFeature();
+            this.geoJsonLayer.addData(geoJsonResults);
         } else {
             //anders render alle opgehaalde resultaten.
             if (this.state.searchQuery) {
-                let geoJsonResults = results.getAllObjectsAsFeature();
+                let geoJsonResults = results.getSearchedAllObjectsAsFeature();
                 this.geoJsonLayer.addData(geoJsonResults);
             }
         }
@@ -444,10 +498,12 @@ class App extends React.Component {
     }
 
     render() {
+        const options = Communicator.getOptions();
+
         let icon;
         let className;
 
-        if (this.state.searchQuery) {
+        if (this.state.searchQuery || this.state.results.getDoubleResults().length > 0) {
             icon = <Icon name='delete' link onClick={this.handleDeleteClick}/>;
         } else {
             icon = <Icon name='search'/>;
@@ -471,14 +527,14 @@ class App extends React.Component {
                     </Link>
                     <div className="searchBar">
                         <Search input={{fluid: true}}
-                                value={this.state.searchQuery}
+                                value={this.state.results.getDoubleResults().length > 1 ? "[ Kaartresultaten worden getoond ]" : this.state.searchQuery}
                                 noResultsMessage="Geen resultaat"
                                 icon={icon}
                                 onSearchChange={this.onSearchChange}
                                 open={false}
+                                onFocus = {this.handleDeleteClick}
                         />
                     </div>
-                    {/*TODO maak hier een swipe animation*/}
                     <div className="resultsContainer">
                         <NavBar
                             loading={this.state.isFetching}
@@ -498,6 +554,27 @@ class App extends React.Component {
                         </div>
                     </div>
                     <div className="footer">
+                        <Dropdown
+                            className = "cogIcon"
+                            icon='cog'
+                            upward = {true}
+                        >
+                            <Dropdown.Menu>
+                                <Dropdown.Header
+                                    content = "Selecteer end-point"
+                                />
+                                <Dropdown.Divider
+                                />
+                                {options.map((option) => (
+                                    <Dropdown.Item
+                                        className = "dropDownItem"
+                                        key={option.value} {...option}
+                                        active = {this.state.currentSelected === option.value}
+                                        onClick = {this.dropDownSelector}
+                                    />
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown>
                         <a href="https://zakelijk.kadaster.nl/brt">Leer meer over de brt</a>
                     </div>
                 </div>
