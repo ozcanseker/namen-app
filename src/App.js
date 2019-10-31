@@ -284,7 +284,8 @@ class App extends React.Component {
         } else {
             //als de zoekbar text leeg is
             this.setState({
-                searchQuery: ""
+                searchQuery: "",
+                isFetching : false
             });
 
             //verwijder alle resultaten

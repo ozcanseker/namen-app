@@ -5,9 +5,12 @@ class StartScreen extends React.Component {
         return (
             <div className="startScreen">
                 <p className="boldHeaderText">Hoe werkt het?</p>
-                <p className="explainText">Je kan een naam zoeken in het zoekveld. Dit kan bijvoorbeeld je gemeente, of buurt naam zijn. Probeer
-                    verschillende dingen en zie wat je kan ontdekken. Ook kan je zoeken met de kaart. Klik met de rechtermuis knop op de kaart en zie wat er gebeurt.
-                 Als je verder bent ingezoomt, krijg je ook nauwkeurigere klik resultaten.</p>
+                <p className="explainText">
+                    De brt bestaat uit objecten. Al deze objecten hebben een naam. Objecten kunnen gemeentes, buurten of provincies zijn.
+                    Je kan een naam zoeken in het zoekveld. Probeer verschillende dingen en zie wat je kan ontdekken. Ook kan je zoeken met de kaart. Klik met de rechtermuis knop op de kaart en zie wat er gebeurt.
+                    Als je bent ingezoomd, krijg je ook nauwkeurigere klik resultaten.
+                    Sommige objecten zijn verdeeld in stukken (Bijv rivieren). Als je iets interessant vindt, kopieer de naam in het zoekveld, misschien dat je meer te zien krijgt.
+                </p>
                 <p className="boldHeaderText">Wat is het?</p>
                 <p className="explainText">Dit is een applicatie die objecten uit de brt haalt. Denk hierbij
                     aan buurten, straaten, meren en zelf bomen. Deze objecten hebben allemaal een naam.
