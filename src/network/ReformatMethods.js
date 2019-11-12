@@ -49,7 +49,7 @@ export function seperateUpperCase(string) {
  * @returns {string}
  */
 export function veranderNaarJaNee(string) {
-    if (string === "1") {
+    if (string === "1" || string === "true") {
         return "ja";
     }
     return "nee";

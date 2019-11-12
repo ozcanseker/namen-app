@@ -87,7 +87,7 @@ class ObjectScreen extends React.Component {
                 let value = res.value;
 
                 if(value.startsWith("http://")){
-                    value = (<a href={value}>{value}</a>);
+                    value = (<a href={value} target="_blank" rel = "noreferrer noopener">{value}</a>);
                 }
 
                 return (<tr key = {res.key + res.value}>

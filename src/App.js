@@ -11,13 +11,14 @@ import * as turf from '@turf/turf';
 import Routes from './routes/Routes'
 import {Search, Icon, Dropdown} from 'semantic-ui-react'
 import NavBar from "./components/NavBar";
-import Loader from "./components/Loader"
+import Loader from "./components/Loader";
 
 /**
  * Assets
  */
 import './App.css';
 import KadasterImg from './assets/Logo-kadaster.png';
+import MarkerGold from './assets/GoldMarker.png';
 
 /**
  * Netwerk
@@ -30,6 +31,8 @@ import {Link, withRouter, matchPath} from "react-router-dom";
  */
 import ResultatenHouder from './model/ResultatenHouder';
 import ClickedResultaat from "./model/ClickedResultaat";
+import {GoldIcon, DefaultIcon} from "./components/GoldIcon";
+
 
 class App extends React.Component {
     constructor(props) {
@@ -74,11 +77,10 @@ class App extends React.Component {
 
         //zet de kaart tile layer aka de brt
         L.tileLayer('https://geodata.nationaalgeoregister.nl/tiles/service/wmts/brtachtergrondkaart/EPSG:3857/{z}/{x}/{y}.png', {
-            attribution: 'Kaartgegevens &copy; <a href="https://www.kadaster.nl/">Kadaster</a> | <a href="https://www.verbeterdekaart.nl">Verbeter de kaart</a> '
+            attribution: 'Kaartgegevens &copy; <a href="https://www.kadaster.nl/" target="_blank" rel = "noreferrer noopener">Kadaster</a> | <a href="https://www.verbeterdekaart.nl" target="_blank" rel = "noreferrer noopener">Verbeter de kaart</a> '
         }).addTo(this.map);
 
         //Wanneer je dubbelklikt op de kaart krijg dan alle locaties terug er om heen.
-        //TODO werkt nog niet
         this.map.on('contextmenu', this.handleRightMouseClick);
 
         //zet de geojson layer en de functies die worden aangeroepen.
@@ -86,11 +88,26 @@ class App extends React.Component {
         //point to layer bij elke marker
         this.geoJsonLayer = L.geoJSON([], {
             onEachFeature: this.handleGeoJsonLayerDrawing,
-            pointToLayer: this.addMarker
+            pointToLayer: this.addMarker,
+            style: this.getStyle
         }).addTo(this.map);
 
         //de groep voor de markers
         this.markerGroup = L.featureGroup().addTo(this.map);
+    };
+
+    getStyle(feature){
+        if(feature.properties){
+            // this.getHexFromColor()
+        }
+    }
+
+    getHexFromColor(color){
+        if(color === "yellow"){
+            return "#FDFD66";
+        }else {
+            return undefined;
+        }
     }
 
     /**
@@ -140,7 +157,7 @@ class App extends React.Component {
      * De functie die de kaart aanroept elke keer als deze een marker wilt toevoegen.
      **/
     addMarker = (feature, latlng) => {
-        let marker = L.marker(latlng).addTo(this.markerGroup);
+        let marker = L.marker(latlng, ).addTo(this.markerGroup);
 
         //dit is de pop up en de html die tevoorschijn komt.
         marker.bindPopup(`<div class = "marker">
@@ -152,21 +169,32 @@ class App extends React.Component {
             closeButton: false
         });
 
-        //wanner je over de marker gaat laat de pop up zien
-        marker.on('mouseover', function (e) {
+
+        let onHover = function(e){
             this.openPopup();
-        });
+            this.setIcon(GoldIcon);
+        }.bind(marker);
+
+        let onHoverOff = function(e){
+            this.closePopup();
+            this.setIcon(DefaultIcon);
+        }.bind(marker);
+
+        //wanner je over de marker gaat laat de pop up zien
+        marker.on('mouseover', onHover);
+        feature.properties._setOnHover(onHover);
 
         //wanneer je er van af gaat laat het weg
-        marker.on('mouseout', function (e) {
-            this.closePopup();
-        });
+        marker.on('mouseout', onHoverOff);
+        feature.properties._setOnHoverOff(onHoverOff);
 
         //wanneer je er op klikt ga naar die marker
         marker.on('click', () => {
             this.onClickItem(feature.properties)
         });
-    }
+
+        return marker;
+    };
 
     /**
      * Tekent de objecten op de kaart.
@@ -177,7 +205,7 @@ class App extends React.Component {
             var latLong = this.getCenterGeoJson(feature);
 
             //op deze center voeg een marker toe
-            this.addMarker(feature, latLong);
+            let marker = this.addMarker(feature, latLong);
 
             //Dit is de pop up die getoond wordt wanneer je over het getekende deel gaat.
             layer.bindPopup(`<div class = "marker">
@@ -191,12 +219,14 @@ class App extends React.Component {
 
             //laat de pop up zien als je erover gaat
             layer.on('mouseover', function (e) {
-                this.openPopup();
+                marker.openPopup();
+                marker.setIcon(GoldIcon);
             });
 
             //sluit de pop up als je er van af gaat
             layer.on('mouseout', function (e) {
-                this.closePopup();
+                marker.closePopup();
+                marker.setIcon(DefaultIcon);
             });
 
             //als je er op klikt ga er dan naartoe
@@ -498,6 +528,14 @@ class App extends React.Component {
         this.updateIng = false;
     }
 
+    onFocus = () => {
+        if(this.state.searchQuery){
+            this.onSearchChange({},{value: this.state.searchQuery});
+        }else{
+            this.handleDeleteClick();
+        }
+    }
+
     render() {
         const options = Communicator.getOptions();
 
@@ -533,7 +571,7 @@ class App extends React.Component {
                                 icon={icon}
                                 onSearchChange={this.onSearchChange}
                                 open={false}
-                                onFocus = {this.handleDeleteClick}
+                                onFocus = {this.onFocus}
                         />
                     </div>
                     <div className="resultsContainer">
@@ -576,7 +614,7 @@ class App extends React.Component {
                                 ))}
                             </Dropdown.Menu>
                         </Dropdown>
-                        <a href="https://zakelijk.kadaster.nl/brt">Leer meer over de brt</a>
+                        <a href="https://zakelijk.kadaster.nl/brt" target="_blank" rel = "noreferrer noopener">Lees meer over de Basisregistratie Topografie (BRT)</a>
                     </div>
                 </div>
                 <div className={className}>

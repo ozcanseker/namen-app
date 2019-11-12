@@ -23,8 +23,6 @@ export async function getMatch(text) {
     latestString = text;
 
     //doe hierna 2 queries. Eentje voor exacte match
-
-    // let exactMatch = await queryPDOK(nameQueryExactMatchPDOK(firstLetterCapital(text)));
     let exactMatch = await queryTriply(nameQueryExactMatch(firstLetterCapital(text)));
 
     //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
@@ -142,7 +140,7 @@ export async function getAllAttribtes(clickedRes) {
 
     indexes.sort((a, b) => {
         return a.index - b.index;
-    })
+    });
 
     /**
      * Laad de attributen in de clicked res
@@ -288,6 +286,7 @@ function nameQueryExactMatch(query) {
             SELECT distinct * WHERE {
               {?obj brt:naamNL "${query}".} union {?obj brt:naam "${query}".} union {?obj brt:naamFries "${query}".} UNION {?obj brt:brugnaam "|${query}|"}  UNION {?obj brt:tunnelnaam "|${query}|"} UNION {?obj brt:sluisnaam "|${query}|"} UNION {?obj brt:knooppuntnaam "|${query}|"} UNION {?obj brt:naamOfficieel  "|${query}|"}.
             }
+            LIMIT 990
 `
 }
 

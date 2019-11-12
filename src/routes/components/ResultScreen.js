@@ -19,7 +19,9 @@ class ResultScreen extends React.Component {
 
             return (<li key={res.getUrl() + res.getNaam()}
                         className="liResultScreen"
-                        onClick={() => {this.props.onClickItem(res)}}>
+                        onClick={() => {this.props.onClickItem(res)}}
+                        onMouseEnter={() => {res._onHover()}}
+                        onMouseLeave={() => {res._onHoverOff()}}>
                 {pElementHoofd}
                 {pElementSub}
             </li>)

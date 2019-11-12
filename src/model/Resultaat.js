@@ -10,6 +10,9 @@ class Resultaat {
         this._geoJson = geoJson;
 
         this._subscribers = [];
+
+        this._onHoverDef = undefined;
+        this._onHoverOffDef = undefined;
     }
 
     /**
@@ -65,6 +68,26 @@ class Resultaat {
             type: "Feature",
             properties: this,
             geometry: this.getGeoJson()
+        }
+    }
+
+    _setOnHover(func){
+        this._onHoverDef = func;
+    }
+
+    _setOnHoverOff(func){
+        this._onHoverOffDef = func;
+    }
+
+    _onHover(){
+        if(this._onHoverDef){
+            this._onHoverDef();
+        }
+    }
+
+    _onHoverOff(){
+        if (this._onHoverOffDef) {
+            this._onHoverOffDef()
         }
     }
 }

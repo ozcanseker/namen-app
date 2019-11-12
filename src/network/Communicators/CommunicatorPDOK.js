@@ -1,6 +1,7 @@
 import getIndexOfClasses from "../allClasses";
 import Resultaat from "../../model/Resultaat";
 import * as wellKnown from 'wellknown'
+import {firstLetterCapital, seperateUpperCase, stripUrlToType, veranderNaarJaNee} from '../ReformatMethods'
 
 /**
  * Dit is het laatst ingetype string. zorgt ervoor dat je niet vorige resultaten rendert
@@ -22,12 +23,7 @@ export async function getMatch(text) {
     latestString = text;
 
     //doe hierna 2 queries. Eentje voor exacte match
-
-    // let exactMatch = await queryPDOK(nameQueryExactMatchPDOK(firstLetterCapital(text)));
     let exactMatch = await queryPDOK(nameQueryExactMatchPDOK(firstLetterCapital(text)));
-    //zet deze om in een array met Resultaat.js
-    exactMatch = await exactMatch.text();
-    exactMatch = makeSearchScreenResults(JSON.parse(exactMatch));
 
     //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
     if (latestString !== text) {
@@ -36,6 +32,10 @@ export async function getMatch(text) {
         //bij een network error de string error
         return "error";
     }
+
+    //zet deze om in een array met Resultaat.js
+    exactMatch = await exactMatch.text();
+    exactMatch = makeSearchScreenResults(JSON.parse(exactMatch));
 
     //Doe hierna nog een query voor dingen die op de ingetypte string lijken.
     let result = await queryPDOK(nameQueryForRegexMatch(text));
@@ -81,8 +81,6 @@ export async function getAllAttribtes(clickedRes) {
     let naamOfficieel;
     let types = [];
     let overigeAttributen = [];
-
-    console.log(nodes);
 
     /**
      * Ga langs elk attribuut en voeg deze toe aan de correct attribuut
@@ -138,49 +136,14 @@ export async function getAllAttribtes(clickedRes) {
         indexes.push({index: index, type: value});
     }
 
+    indexes.sort((a, b) => {
+        return a.index - b.index;
+    });
+
     /**
      * Laad de attributen in de clicked res
      */
     clickedRes.loadInAttributes(naam, naamOfficieel, naamNl, naamFries, [indexes[0].type], overigeAttributen);
-}
-
-/**
- * Verandert een 1 en 0 naar ja en nee.
- * @param string
- * @returns {string}
- */
-function veranderNaarJaNee(string) {
-    if (string === "1") {
-        return "ja";
-    }
-    return "nee";
-}
-
-/**
- * Seperate de string gebasseerd op uppercase.
- * @param string
- * @returns {string}
- */
-function seperateUpperCase(string) {
-    string = string.split(/(?=[A-Z])/);
-    string.forEach((res, index, arr) => {
-
-            if (index !== 0) {
-                arr[index] = arr[index].charAt(0).toLowerCase() + arr[index].slice(1)
-            }
-        }
-    )
-
-    return string.join(" ");
-}
-
-/**
- * Haalt alles voor de # weg
- * @param url
- * @returns {*|void|string}
- */
-function stripUrlToType(url) {
-    return url.replace(/.*#/, "");
 }
 
 /**
@@ -254,7 +217,7 @@ function makeSearchScreenResults(results) {
 
                     indexes.sort((a, b) => {
                         return a.index - b.index;
-                    })
+                    });
 
 
                     let value = indexes[0].type;
@@ -282,24 +245,6 @@ function makeSearchScreenResults(results) {
 }
 
 /**
- * Verander elk eerste letter naar een hoofdletter
- * @param text
- * @returns {string}
- */
-function firstLetterCapital(text) {
-    return text.toLowerCase()
-        .split(' ')
-        .map(s => {
-            if (!s.startsWith("ij")) {
-                return s.charAt(0).toUpperCase() + s.substring(1)
-            } else {
-                return s.charAt(0).toUpperCase() + s.charAt(1).toUpperCase() + s.substring(2)
-            }
-        })
-        .join(' ');
-}
-
-/**
  * Voeg resultaten samen
  * @param exact
  * @param regex
@@ -324,7 +269,7 @@ function nameQueryExactMatchPDOK(query) {
             SELECT distinct * WHERE {
               {?obj brt:naamNL "${query}"@nl.} union {?obj brt:naam "${query}"@nl.} union {?obj brt:naamFries "${query}"@fy.} UNION {?obj brt:brugnaam "${query}"@nl}  UNION {?obj brt:tunnelnaam "${query}"@nl} UNION {?obj brt:sluisnaam "${query}"@nl} UNION {?obj brt:knooppuntnaam "${query}"@nl} UNION {?obj brt:naamOfficieel  "${query}"@nl} UNION {?obj brt:naamOfficieel  "${query}"@fy}
             }
-             LIMIT 990
+            LIMIT 990
 `
 }
 
