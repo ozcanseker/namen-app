@@ -18,7 +18,6 @@ import Loader from "./components/Loader";
  */
 import './App.css';
 import KadasterImg from './assets/Logo-kadaster.png';
-import MarkerGold from './assets/GoldMarker.png';
 
 /**
  * Netwerk
@@ -244,8 +243,29 @@ class App extends React.Component {
             });
 
             //als je er op klikt ga er dan naartoe
-            layer.on('click', () => {
-                this.onClickItem(feature.properties)
+            layer.on('click', (e) => {
+                let res;
+
+                if(this.state.results.getRightClickedRes().length > 0){
+                    res = this.state.results.getRightClickedRes();
+                }else{
+                    res = this.state.results.getResults();
+                }
+
+                let point = turf.point([e.latlng.lng, e.latlng.lat]);
+                let contains = res.filter(res => {
+                    console.log(res, res.getGeoJson().type !== "MultiPolygon");
+                   return res.getGeoJson().type !== "MultiPolygon" && turf.booleanContains(res.getGeoJson(), point);
+                });
+
+                console.log(contains.length);
+                console.log(contains.length < 2);
+
+                if(contains.length < 2){
+                    this.onClickItem(feature.properties)
+                }else{
+                    //open hier iets
+                }
             });
         }
     };
@@ -399,7 +419,7 @@ class App extends React.Component {
             strict: true
         })
 
-        if(this.state.results.getDoubleResults().length > 1 && !match){
+        if(this.state.results.getRightClickedRes().length > 1 && !match){
             this.state.results.clearDoubleResults();
 
             if(this.state.searchQuery === ""){
@@ -453,7 +473,7 @@ class App extends React.Component {
         let timeout = 100;
         let results = this.state.results;
 
-        if (results.getResults().length > 40 || results.getDoubleResults().length > 1) {
+        if (results.getResults().length > 40 || results.getRightClickedRes().length > 1) {
             timeout = 600;
         } else if (results.getResults().length > 20) {
             timeout = 200;
@@ -524,7 +544,7 @@ class App extends React.Component {
         if (this.state.results.getClickedResult()) {
             let feature = this.state.results.getClickedResult().getAsFeature();
             this.geoJsonLayer.addData(feature);
-        }else if(this.state.results.getDoubleResults().length > 0){
+        }else if(this.state.results.getRightClickedRes().length > 0){
             let geoJsonResults = results.getClickedAllObjectsAsFeature();
             this.geoJsonLayer.addData(geoJsonResults);
         } else {
@@ -556,7 +576,7 @@ class App extends React.Component {
         let icon;
         let className;
 
-        if (this.state.searchQuery || this.state.results.getDoubleResults().length > 0) {
+        if (this.state.searchQuery || this.state.results.getRightClickedRes().length > 0) {
             icon = <Icon name='delete' link onClick={this.handleDeleteClick}/>;
         } else {
             icon = <Icon name='search'/>;
@@ -580,7 +600,7 @@ class App extends React.Component {
                     </Link>
                     <div className="searchBar">
                         <Search input={{fluid: true}}
-                                value={this.state.results.getDoubleResults().length > 1 ? "[ Kaartresultaten worden getoond ]" : this.state.searchQuery}
+                                value={this.state.results.getRightClickedRes().length > 1 ? "[ Kaartresultaten worden getoond ]" : this.state.searchQuery}
                                 noResultsMessage="Geen resultaat"
                                 icon={icon}
                                 onSearchChange={this.onSearchChange}

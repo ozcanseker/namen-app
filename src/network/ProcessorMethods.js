@@ -17,8 +17,80 @@ function PreProcessResultList(nodes){
 
 }
 
-function PreProcessAttributes(nodes){
+function makeClickedResultFromBindings(nodes){
+    let naam;
+    let naamNl;
+    let naamFries;
+    let naamOfficieel;
+    let types = [];
+    let overigeAttributen = [];
 
+    /**
+     * Ga langs elk attribuut en voeg deze toe aan de correct attribuut
+     */
+    for (let i = 0; i < nodes.length; i++) {
+        let key = stripUrlToType(nodes[i].prd.value);
+        let value = nodes[i].obj.value;
+
+        if (key === "naam" || key === "brugnaam" || key === "tunnelnaam" || key === "sluisnaam" || key === "knooppuntnaam") {
+            if(key !== "naam"){
+                value = value.replace(/\|/g, "");
+            }
+
+            naam = value;
+        } else if (key === "naamNL") {
+            naamNl = value;
+        } else if (key === "naamFries") {
+            naamFries = value;
+        } else if (key === "type") {
+            types.push((stripUrlToType(value)));
+        } else if (key === "naamOfficieel") {
+            naamOfficieel = value.replace(/\|/g, "");
+        } else {
+            let formattedKey;
+
+            if(key === "isBAGwoonplaats"){
+                formattedKey = "BAG-woonplaats";
+            }else{
+                formattedKey = seperateUpperCase(key)
+            }
+
+            if (key === "soortnaam" || key === "isBAGwoonplaats" || key === "bebouwdeKom" || key === "aantalinwoners" || key === "getijdeinvloed"
+                || key === "hoofdafwatering" || key === "isBAGnaam" || key === "elektrificatie" || key === "gescheidenRijbaan") {
+
+                if (key !== "aantalinwoners" && key !== "soortnaam") {
+                    value = veranderNaarJaNee(value);
+                }
+                overigeAttributen.unshift({key: (formattedKey), value: value});
+            } else {
+                overigeAttributen.push({key: (formattedKey), value: value});
+            }
+        }
+    }
+
+    /**
+     * Sorteer types van subclass naar hoofdclass
+     * @type {array van types}
+     */
+    let indexes = [];
+    for (let i = 0; i < types.length; i++) {
+        let index = getIndexOfClasses(types[i]);
+        let value = seperateUpperCase(types[i]);
+        indexes.push({index: index, type: value});
+    }
+
+    indexes.sort((a, b) => {
+        return a.index - b.index;
+    });
+
+    return {
+        naam: naam,
+        naamNl: naamNl,
+        naamFries: naamFries,
+        naamOfficieel : naamOfficieel,
+        types: types,
+        overigeAttributen : overigeAttributen
+    }
 }
 
 export function isShownClickedResults(res){
@@ -40,6 +112,7 @@ export function getColor(type){
         case "Relief": return undefined;
         case "Waterdeel": return "blue";
         case "Wegdeel": return "purple";
+        default: return undefined;
     }
 }
 
@@ -49,7 +122,6 @@ export function getColor(type){
  */
 export function sortByObjectClass(list){
     list.sort((a , b) => {
-        console.log(a.getType() === "Gemeente" || b.getType() === "Gemeente");
         if(a.getType() === "Gemeente" || b.getType() === "Gemeente"){
             if(a.getType() === "Gemeente" && b.getType() === "Gemeente"){
                 return 0;

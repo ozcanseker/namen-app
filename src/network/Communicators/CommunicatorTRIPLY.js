@@ -1,6 +1,6 @@
 import Resultaat from "../../model/Resultaat";
 import * as wellKnown from 'wellknown';
-import * as PreProcessor from "../PreProcessor";
+import * as PreProcessor from "../ProcessorMethods";
 
 /**
  * Dit is het laatst ingetype string. zorgt ervoor dat je niet vorige resultaten rendert
@@ -35,7 +35,6 @@ export async function getMatch(text) {
     //zet deze om in een array met Resultaat.js
     exactMatch = await exactMatch.text();
     exactMatch = makeSearchScreenResults(JSON.parse(exactMatch));
-
 
     //Doe hierna nog een query voor dingen die op de ingetypte string lijken.
     let result = await queryTriply(nameQueryForRegexMatch(text));
@@ -81,6 +80,10 @@ export async function getAllAttribtes(clickedRes) {
     let naamOfficieel;
     let types = [];
     let overigeAttributen = [];
+    let burgNaam;
+    let tunnelNaam;
+    let knoopPuntNaam;
+    let sluisNaam;
 
     /**
      * Ga langs elk attribuut en voeg deze toe aan de correct attribuut
@@ -89,12 +92,20 @@ export async function getAllAttribtes(clickedRes) {
         let key = PreProcessor.stripUrlToType(nodes[i].prd.value);
         let value = nodes[i].obj.value;
 
-        if (key === "naam" || key === "brugnaam" || key === "tunnelnaam" || key === "sluisnaam" || key === "knooppuntnaam") {
-            if(key !== "naam"){
-                value = value.replace(/\|/g, "");
-            }
-
+        if (key === "naam") {
             naam = value;
+        }else if( key === "brugnaam"){
+            value = value.replace(/\|/g, "");
+            burgNaam = value;
+        } else if(key === "tunnelnaam"){
+            value = value.replace(/\|/g, "");
+            tunnelNaam = value;
+        }else if( key === "sluisnaam" ){
+            value = value.replace(/\|/g, "");
+            sluisNaam = value;
+        }else if( key === "knooppuntnaam"){
+            value = value.replace(/\|/g, "");
+            knoopPuntNaam = value;
         } else if (key === "naamNL") {
             naamNl = value;
         } else if (key === "naamFries") {
@@ -136,7 +147,6 @@ export async function getAllAttribtes(clickedRes) {
         indexes.push({index: index, type: value});
     }
 
-
     indexes.sort((a, b) => {
         return a.index - b.index;
     });
@@ -144,10 +154,18 @@ export async function getAllAttribtes(clickedRes) {
     /**
      * Laad de attributen in de clicked res
      */
-    clickedRes.loadInAttributes(naam, naamOfficieel, naamNl, naamFries, [indexes[0].type], overigeAttributen);
+    clickedRes.loadInAttributes(
+        naam,
+        naamOfficieel,
+        naamNl,
+        naamFries,
+        [indexes[0].type],
+        overigeAttributen,
+        burgNaam,
+        tunnelNaam,
+        sluisNaam,
+        knoopPuntNaam);
 }
-
-
 
 /**
  * maakt van een lijst van Result.js objecten uit de sparql query.
@@ -178,7 +196,11 @@ function makeSearchScreenResults(results) {
                 let geojson;
                 let color;
 
-                if(res.brugnaam || res.tunnelnaam || res.sluisnaam || res.knooppuntnaam){
+                if((res.brugnaam && res.brugnaam.value.toUpperCase().includes(latestString.toUpperCase()))
+                    || (res.tunnelnaam && res.tunnelnaam.value.toUpperCase().includes(latestString.toUpperCase()))
+                    || (res.sluisnaam && res.sluisnaam.value.toUpperCase().includes(latestString.toUpperCase()))
+                    || (res.knooppuntnaam && res.knooppuntnaam.value.toUpperCase().includes(latestString.toUpperCase()))
+                ){
                     if(res.brugnaam){
                         naamPlaats = res.brugnaam.value;
                     }else if(res.tunnelnaam){
@@ -227,7 +249,6 @@ function makeSearchScreenResults(results) {
                     type = PreProcessor.seperateUpperCase(value);
 
                     color = PreProcessor.getColor(indexes[indexes.length - 1].type);
-                    // console.log(color);
                 }
 
                 //de wkt naar geojson
@@ -268,7 +289,7 @@ function mergeResults(exact, regex) {
 }
 
 async function queryTriply(query) {
-    let result = await fetch("https://api.kadaster.triply.cc/datasets/kadaster/brt/services/brt/sparql", {
+    return await fetch("https://api.kadaster.triply.cc/datasets/kadaster/brt/services/brt/sparql", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/sparql-query',
@@ -276,8 +297,6 @@ async function queryTriply(query) {
         },
         body: query
     });
-
-    return result;
 }
 
 function nameQueryExactMatch(query) {

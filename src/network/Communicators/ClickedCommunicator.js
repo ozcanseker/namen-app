@@ -1,6 +1,6 @@
 import Resultaat from "../../model/Resultaat";
 import * as wellKnown from "wellknown";
-import * as PreProcessor from "../PreProcessor";
+import * as PreProcessor from "../ProcessorMethods";
 
 export async function getFromCoordinates(lat, long, top, left, bottom, right) {
     if (right - left > 0.1 || top - bottom > 0.0625) {
@@ -136,6 +136,19 @@ function makeSearchScreenResults(results) {
     return returnObject;
 }
 
+async function queryTriply(query) {
+    let result = await fetch("https://api.kadaster.triply.cc/datasets/kadaster/brt/services/brt/sparql", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/sparql-query',
+            'Accept': 'application/sparql-results+json'
+        },
+        body: query
+    });
+
+    return result;
+}
+
 function queryForType(queryString) {
     return `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -180,17 +193,4 @@ function queryForCoordinates(top, left, bottom, righ) {
             }
             limit 100
             `
-}
-
-async function queryTriply(query) {
-    let result = await fetch("https://api.kadaster.triply.cc/datasets/kadaster/brt/services/brt/sparql", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/sparql-query',
-            'Accept': 'application/sparql-results+json'
-        },
-        body: query
-    });
-
-    return result;
 }

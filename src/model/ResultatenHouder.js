@@ -2,7 +2,7 @@
  * Houdt resultaat bij. Update de app als er iets verandert.
  */
 import Observable from "./Observable";
-import {isShownClickedResults, sortByObjectClass} from "../network/PreProcessor";
+import {isShownClickedResults, sortByObjectClass} from "../network/ProcessorMethods";
 
 class ResultatenHouder extends Observable{
     constructor(){
@@ -115,7 +115,7 @@ class ResultatenHouder extends Observable{
         this.updateSubscribers();
     }
 
-    getDoubleResults(){
+    getRightClickedRes(){
         return this._rightClickedResults;
     }
 
