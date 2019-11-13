@@ -1,7 +1,6 @@
 import Resultaat from "../../model/Resultaat";
-import * as wellKnown from 'wellknown'
-import getIndexOfClasses from '../allClasses'
-import {firstLetterCapital, seperateUpperCase, stripUrlToType, veranderNaarJaNee} from '../ReformatMethods'
+import * as wellKnown from 'wellknown';
+import * as PreProcessor from "../PreProcessor";
 
 /**
  * Dit is het laatst ingetype string. zorgt ervoor dat je niet vorige resultaten rendert
@@ -23,7 +22,7 @@ export async function getMatch(text) {
     latestString = text;
 
     //doe hierna 2 queries. Eentje voor exacte match
-    let exactMatch = await queryTriply(nameQueryExactMatch(firstLetterCapital(text)));
+    let exactMatch = await queryTriply(nameQueryExactMatch(PreProcessor.firstLetterCapital(text)));
 
     //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
     if (latestString !== text) {
@@ -87,7 +86,7 @@ export async function getAllAttribtes(clickedRes) {
      * Ga langs elk attribuut en voeg deze toe aan de correct attribuut
      */
     for (let i = 0; i < nodes.length; i++) {
-        let key = stripUrlToType(nodes[i].prd.value);
+        let key = PreProcessor.stripUrlToType(nodes[i].prd.value);
         let value = nodes[i].obj.value;
 
         if (key === "naam" || key === "brugnaam" || key === "tunnelnaam" || key === "sluisnaam" || key === "knooppuntnaam") {
@@ -101,7 +100,7 @@ export async function getAllAttribtes(clickedRes) {
         } else if (key === "naamFries") {
             naamFries = value;
         } else if (key === "type") {
-            types.push((stripUrlToType(value)));
+            types.push((PreProcessor.stripUrlToType(value)));
         } else if (key === "naamOfficieel") {
             naamOfficieel = value.replace(/\|/g, "");
         } else {
@@ -110,14 +109,14 @@ export async function getAllAttribtes(clickedRes) {
             if(key === "isBAGwoonplaats"){
                 formattedKey = "BAG-woonplaats";
             }else{
-                formattedKey = seperateUpperCase(key)
+                formattedKey = PreProcessor.seperateUpperCase(key)
             }
 
             if (key === "soortnaam" || key === "isBAGwoonplaats" || key === "bebouwdeKom" || key === "aantalinwoners" || key === "getijdeinvloed"
                 || key === "hoofdafwatering" || key === "isBAGnaam" || key === "elektrificatie" || key === "gescheidenRijbaan") {
 
                 if (key !== "aantalinwoners" && key !== "soortnaam") {
-                    value = veranderNaarJaNee(value);
+                    value = PreProcessor.veranderNaarJaNee(value);
                 }
                 overigeAttributen.unshift({key: (formattedKey), value: value});
             } else {
@@ -132,8 +131,8 @@ export async function getAllAttribtes(clickedRes) {
      */
     let indexes = [];
     for (let i = 0; i < types.length; i++) {
-        let index = getIndexOfClasses(types[i]);
-        let value = seperateUpperCase(types[i]);
+        let index = PreProcessor.getIndexOfClasses(types[i]);
+        let value = PreProcessor.seperateUpperCase(types[i]);
         indexes.push({index: index, type: value});
     }
 
@@ -177,6 +176,7 @@ function makeSearchScreenResults(results) {
                 let naamPlaats;
                 let type;
                 let geojson;
+                let color;
 
                 if(res.brugnaam || res.tunnelnaam || res.sluisnaam || res.knooppuntnaam){
                     if(res.brugnaam){
@@ -214,18 +214,20 @@ function makeSearchScreenResults(results) {
 
                     //sorteer dit op basis van relevantie.
                     for (let j = 0; j < resOr.length; j++) {
-                        let value = stripUrlToType(resOr[j].type.value);
-                        let index = getIndexOfClasses(value);
+                        let value = PreProcessor.stripUrlToType(resOr[j].type.value);
+                        let index = PreProcessor.getIndexOfClasses(value);
                         indexes.push({index: index, type: value});
                     }
 
                     indexes.sort((a, b) => {
                         return a.index - b.index;
-                    })
-
+                    });
 
                     let value = indexes[0].type;
-                    type = seperateUpperCase(value);
+                    type = PreProcessor.seperateUpperCase(value);
+
+                    color = PreProcessor.getColor(indexes[indexes.length - 1].type);
+                    // console.log(color);
                 }
 
                 //de wkt naar geojson
@@ -235,7 +237,7 @@ function makeSearchScreenResults(results) {
                 }
 
                 //zet secundaire properties/
-                resultaatObj.setSecondProperties(naamPlaats, type, geojson);
+                resultaatObj.setSecondProperties(naamPlaats, type, geojson, color);
             } else {
                 console.log("error: ", resOr, resultaatObj);
             }

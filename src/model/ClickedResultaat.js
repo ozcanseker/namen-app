@@ -2,8 +2,12 @@
  * Het resultaat dat aangeklikt is.
  * Kan op twee manieren gegevens in laden. Met de constructor of de methode loadInAttributes.
  */
-class ClickedResultaat {
+import Observable from "./Observable";
+
+class ClickedResultaat extends Observable{
     constructor(res, naam, naamOfficieel, naamNl, naamFries, types, overige){
+        super();
+
         this._res = res;
         this._naam = naam;
         this._naamOfficieel = naamOfficieel;
@@ -33,8 +37,6 @@ class ClickedResultaat {
                 this._naam = this._naamFries;
             }
         }
-
-        this._subscribers = [];
     }
 
     getNaamFries(){
@@ -74,25 +76,6 @@ class ClickedResultaat {
                 this._naam = this._naamFries;
             }
         }
-    }
-
-    upDateSubScribers(){
-        this._subscribers.map(subscriber => subscriber.update());
-    }
-
-    /**
-     * Als je wilt subscriben moet je de methode update implementeren.
-     * Ook niet vergeten om te unsubscriben.
-     * @param subscriber
-     */
-    subscribe(subscriber){
-        this._subscribers.push(subscriber);
-    }
-
-    unsubscribe(subscriber){
-        this._subscribers.filter(subscriberList  => {
-            return subscriberList !== subscriber;
-        });
     }
 
     getNaamOfficieel(){

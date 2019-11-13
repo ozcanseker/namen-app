@@ -96,17 +96,31 @@ class App extends React.Component {
         this.markerGroup = L.featureGroup().addTo(this.map);
     };
 
-    getStyle(feature){
-        if(feature.properties){
-            // this.getHexFromColor()
+    getStyle = (feature) => {
+        if(feature.properties.getColor()){
+            return {
+                color: this.getHexFromColor(feature.properties.getColor())
+            };
         }
-    }
+    };
 
     getHexFromColor(color){
-        if(color === "yellow"){
-            return "#FDFD66";
-        }else {
-            return undefined;
+        if(color === "turqoise"){
+            return "#3DCCC7";
+        }else if(color === "purple"){
+            return "#7A306C";
+        }else if (color === "green"){
+            return "#489E17";
+        }else if(color === "red"){
+            return "#BA1200";
+        }else if(color === "pink"){
+            return  "#FFD9CE";
+        }else if (color === "blue") {
+            return "#1B2CFF";
+        }else if(color === "orange"){
+            return "#FAA916";
+        }else if(color === "yellow"){
+            return "#F0F66E";
         }
     }
 
@@ -151,7 +165,7 @@ class App extends React.Component {
                 })
             }
         });
-    }
+    };
 
     /**
      * De functie die de kaart aanroept elke keer als deze een marker wilt toevoegen.
@@ -234,7 +248,7 @@ class App extends React.Component {
                 this.onClickItem(feature.properties)
             });
         }
-    }
+    };
 
     /**
      * Wanneer iemand op een marker of getekend deel klikt, voer deze methode uit.
@@ -259,7 +273,7 @@ class App extends React.Component {
         this.map.setView(center, zoom);
 
         this.props.history.push(`/result/${res.getNaam()}`);
-    }
+    };
 
     /**
      * Krijg de center van een geojson object.
@@ -281,7 +295,7 @@ class App extends React.Component {
         var lat = centroid.geometry.coordinates[1];
 
         return [lat, lon];
-    }
+    };
 
     /**
      * Wordt aangeroepen wanneer er iets wordt getype
@@ -333,7 +347,7 @@ class App extends React.Component {
         if (this.map) {
             this.map.setView([52.20936, 5.2], 8);
         }
-    }
+    };
 
     /**
      * Roept de communicator aan en haalt de resultaten op.
@@ -363,7 +377,7 @@ class App extends React.Component {
                 this.state.results.setResults(res);
             }
         });
-    }
+    };
 
     /**
      * Wanneer er op het kruisje in de search bar wordt geklikt.
@@ -429,7 +443,7 @@ class App extends React.Component {
                 } catch (e) {console.log(e)};
             }, timeout);
         }
-    }
+    };
 
     /**
      * Krijg een timeout nummer gebasseerd op het aantal resultaten.
@@ -448,7 +462,7 @@ class App extends React.Component {
         }
 
         return timeout;
-    }
+    };
 
     /**
      * Deze methode wordt aangeropen elke keer als de resultaten houder wordt geupdate.
@@ -483,7 +497,7 @@ class App extends React.Component {
                 this.updateMap(results);
             }, timeout);
         }
-    }
+    };
 
     dropDownSelector = (e, v) => {
         if(this.state.currentSelected !== v.value){
@@ -494,7 +508,7 @@ class App extends React.Component {
                 this.handleDeleteClick();
             })
         }
-    }
+    };
 
     /**
      * Update de kaart.
@@ -534,7 +548,7 @@ class App extends React.Component {
         }else{
             this.handleDeleteClick();
         }
-    }
+    };
 
     render() {
         const options = Communicator.getOptions();

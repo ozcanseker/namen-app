@@ -1,7 +1,6 @@
 import Resultaat from "../../model/Resultaat";
-import getIndexOfClasses from "../allClasses";
 import * as wellKnown from "wellknown";
-import {stripUrlToType, seperateUpperCase} from "../ReformatMethods";
+import * as PreProcessor from "../PreProcessor";
 
 export async function getFromCoordinates(lat, long, top, left, bottom, right) {
     if (right - left > 0.1 || top - bottom > 0.0625) {
@@ -63,6 +62,7 @@ function makeSearchScreenResults(results) {
                 let naamPlaats;
                 let type;
                 let geojson;
+                let color;
 
                 if (res.brugnaam || res.tunnelnaam || res.sluisnaam || res.knooppuntnaam) {
                     if (res.brugnaam) {
@@ -100,8 +100,8 @@ function makeSearchScreenResults(results) {
 
                     //sorteer dit op basis van relevantie.
                     for (let j = 0; j < resOr.length; j++) {
-                        let value = stripUrlToType(resOr[j].type.value);
-                        let index = getIndexOfClasses(value);
+                        let value = PreProcessor.stripUrlToType(resOr[j].type.value);
+                        let index = PreProcessor.getIndexOfClasses(value);
                         indexes.push({index: index, type: value});
                     }
 
@@ -111,7 +111,9 @@ function makeSearchScreenResults(results) {
 
 
                     let value = indexes[0].type;
-                    type = seperateUpperCase(value);
+                    type = PreProcessor.seperateUpperCase(value);
+
+                    color = PreProcessor.getColor(indexes[indexes.length - 1].type);
                 }
 
                 //de wkt naar geojson
@@ -121,7 +123,7 @@ function makeSearchScreenResults(results) {
                 }
 
                 //zet secundaire properties/
-                resultaatObj.setSecondProperties(naamPlaats, type, geojson);
+                resultaatObj.setSecondProperties(naamPlaats, type, geojson, color);
             } else {
                 console.log("error: ", resOr, resultaatObj);
             }

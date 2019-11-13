@@ -1,15 +1,17 @@
 /**
  * Een resultaat op het resultaten scherm.
  */
-class Resultaat {
-    constructor(url , naam, type, geoJson){
+import Observable from "./Observable";
+
+class Resultaat extends Observable{
+    constructor(url , naam, type, geoJson, color){
+        super();
         this._url = url;
 
         this._naam = naam;
         this._type = type;
         this._geoJson = geoJson;
-
-        this._subscribers = [];
+        this._color = color;
 
         this._onHoverDef = undefined;
         this._onHoverOffDef = undefined;
@@ -20,13 +22,15 @@ class Resultaat {
      * @param naam string
      * @param type string
      * @param geojson GeoJson
+     * @param color color of the drawn element
      */
-    setSecondProperties(naam, type, geojson){
+    setSecondProperties(naam, type, geojson, color){
         this._type = type;
         this._naam = naam;
         this._geoJson = geojson;
+        this._color = color;
 
-        this.upDateSubScribers();
+        this.updateSubscribers();
     }
 
     getNaam(){
@@ -45,18 +49,8 @@ class Resultaat {
         return this._geoJson;
     }
 
-    upDateSubScribers(){
-        this._subscribers.map(subscriber => subscriber.update());
-    }
-
-    subscribe(subscriber){
-        this._subscribers.push(subscriber);
-    }
-
-    unsubscribe(subscriber){
-        this._subscribers.filter(subscriberList  => {
-            return subscriberList !== subscriber;
-        });
+    getColor(){
+        return this._color;
     }
 
     /**
@@ -67,7 +61,7 @@ class Resultaat {
         return  {
             type: "Feature",
             properties: this,
-            geometry: this.getGeoJson()
+            geometry: this._geoJson
         }
     }
 
