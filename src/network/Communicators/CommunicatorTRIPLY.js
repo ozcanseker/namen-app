@@ -321,7 +321,7 @@ function nameQueryForRegexMatch(queryString) {
               
               FILTER(REGEX(?label, "${queryString}", "i")).
             }
-            LIMIT 31
+            LIMIT 100
             `
 }
 

@@ -1,0 +1,32 @@
+.contextMenuContainer{
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+
+  z-index: 500;
+  background: white;
+  text-align: left;
+  border-radius: 10px;
+}
+
+.contextMenuContainer > p > b {
+  font-size: 80%;
+}
+
+.contextMenuContainer > p > span {
+  font-size: 70%;
+}
+
+.contextMenuContainer > p{
+  white-space: nowrap;
+  display: block;
+  margin: 0;
+  padding : 10px 10px;
+  border-radius: 10px;
+
+  &:hover{
+    cursor: pointer;
+    padding: 9px 9px;
+    box-sizing: border-box;
+    border: #2c84cb 1px solid;
+  }
+}

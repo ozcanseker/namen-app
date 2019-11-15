@@ -52,7 +52,13 @@ class ObjectScreen extends React.Component {
             }
 
 
-            type = (<h3>{res.getTypeString()}</h3>);
+            let color;
+
+            if(res.getColor()){
+                color = {color: this.props.getHexFromColor(res.getColor(), true)};
+            }
+
+            type = (<h3 style={color}>{res.getTypeString()}</h3>);
 
             let naamNl;
             let naamFries;

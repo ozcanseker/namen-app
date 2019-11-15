@@ -7,9 +7,9 @@ let latestMethod = "";
 
 export function getOptions(){
     return [
-        { value: 'tes', text: 'Triply elastic search', description : "snelste"},
-        { value: 'tsp', text: 'Triply sparql', description : "snel"},
-        { value: 'psp', text: 'PDOK sparql', description : "meest actueel"},
+        //{ value: 'tes', text: 'Kadaster Labs Elasticsearch', description : "snelste"},
+        { value: 'tsp', text: 'Kadaster Labs SPARQL', description : "snel"},
+        { value: 'psp', text: 'PDOK SPARQL', description : "meest actueel"},
     ];
 }
 

@@ -3,11 +3,11 @@ import * as wellKnown from "wellknown";
 import * as PreProcessor from "../ProcessorMethods";
 
 export async function getFromCoordinates(lat, long, top, left, bottom, right) {
-    if (right - left > 0.1 || top - bottom > 0.0625) {
-        left = long - 0.01;
-        right = long + 0.01;
-        top = lat + 0.0300;
-        bottom = lat - 0.0300;
+    if (right - left > 0.05 || top - bottom > 0.0300) {
+        left = long - 0.025;
+        right = long + 0.025;
+        top = lat + 0.01500;
+        bottom = lat - 0.01500;
     }
 
     let exactMatch = await queryTriply(queryForCoordinates(top, left, bottom, right));
@@ -191,6 +191,6 @@ function queryForCoordinates(top, left, bottom, righ) {
                 BIND(bif:st_geomfromtext("POLYGON ((${left} ${bottom}, ${left} ${top}, ${righ} ${top}, ${righ} ${bottom}))") as ?yShape).
                 filter(bif:st_intersects(?xShape, ?yShape))
             }
-            limit 100
+            limit 200
             `
 }

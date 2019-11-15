@@ -14,7 +14,14 @@ class ResultScreen extends React.Component {
             }
 
             if(res.getType()){
-                pElementSub = (<p className= "subText">{res.getType() ? res.getType() : String.fromCharCode(32)}</p>);
+                let color;
+
+                if(res.getColor()){
+                    color = {color: this.props.getHexFromColor(res.getColor(), true)};
+                }
+
+                pElementSub = (<p className= "subText" style={color}>
+                    {res.getType() ? res.getType() : String.fromCharCode(32)}</p>);
             }
 
             return (<li key={res.getUrl() + res.getNaam()}

@@ -47,6 +47,10 @@ class ClickedResultaat extends Observable {
         return this._naamNL;
     }
 
+    getColor(){
+        return this._res.getColor();
+    }
+
     /**
      *
      * @param naam String
@@ -80,6 +84,8 @@ class ClickedResultaat extends Observable {
                 this._naam = this._naamFries;
             }
         }
+
+        this.updateSubscribers();
     }
 
     getNaamOfficieel() {
