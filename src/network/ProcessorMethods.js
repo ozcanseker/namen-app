@@ -99,6 +99,26 @@ export function sortByObjectClass(list){
             }
         }
 
+        if(a.getType() === "Buurt" || b.getType() === "Buurt"){
+            if(a.getType() === "Buurt" && b.getType() === "Buurt"){
+                return 0;
+            }else if(a.getType() === "Buurt"){
+                return -1;
+            }else {
+                return 1;
+            }
+        }
+
+        if(a.getObjectClass() === "Gebouw" || b.getObjectClass() === "Gebouw"){
+            if(a.getObjectClass() === "Gebouw" && b.getObjectClass() === "Gebouw"){
+                return 0;
+            }else if(a.getObjectClass() === "Gebouw"){
+                return 1;
+            }else {
+                return -1;
+            }
+        }
+
         return 0;
     })
 }

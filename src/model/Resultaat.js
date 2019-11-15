@@ -24,13 +24,18 @@ class Resultaat extends Observable{
      * @param geojson GeoJson
      * @param color color of the drawn element
      */
-    setSecondProperties(naam, type, geojson, color){
+    setSecondProperties(naam, type, geojson, color, objectClass){
         this._type = type;
         this._naam = naam;
         this._geoJson = geojson;
         this._color = color;
+        this._objectClass = objectClass;
 
         this.updateSubscribers();
+    }
+
+    getObjectClass(){
+        return this._objectClass;
     }
 
     getNaam(){

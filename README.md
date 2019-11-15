@@ -33,3 +33,7 @@ Als je een backend wilt toevoegen moet je naar de Communicator.js class kijken.
 
 - Hoe moeilijk zou het zijn om ook de BAG straatnamen mee te nemen in de namen app?
 
+-voeg ook objectclassen toe
+
+- licht uit
+

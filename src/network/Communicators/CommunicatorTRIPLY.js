@@ -195,6 +195,7 @@ function makeSearchScreenResults(results) {
                 let type;
                 let geojson;
                 let color;
+                let objectClass;
 
                 if((res.brugnaam && res.brugnaam.value.toUpperCase().includes(latestString.toUpperCase()))
                     || (res.tunnelnaam && res.tunnelnaam.value.toUpperCase().includes(latestString.toUpperCase()))
@@ -247,6 +248,7 @@ function makeSearchScreenResults(results) {
 
                     let value = indexes[0].type;
                     type = PreProcessor.seperateUpperCase(value);
+                    objectClass = PreProcessor.seperateUpperCase(indexes[indexes.length - 1].type);
 
                     color = PreProcessor.getColor(indexes[indexes.length - 1].type);
                 }
@@ -258,7 +260,7 @@ function makeSearchScreenResults(results) {
                 }
 
                 //zet secundaire properties/
-                resultaatObj.setSecondProperties(naamPlaats, type, geojson, color);
+                resultaatObj.setSecondProperties(naamPlaats, type, geojson, color, objectClass);
             } else {
                 console.log("error: ", resOr, resultaatObj);
             }
