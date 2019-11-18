@@ -4,7 +4,7 @@
 import Observable from "./Observable";
 
 class Resultaat extends Observable{
-    constructor(url , naam, type, geoJson, color){
+    constructor(url , naam, type, geoJson, color, objectClass){
         super();
         this._url = url;
 
@@ -12,6 +12,7 @@ class Resultaat extends Observable{
         this._type = type;
         this._geoJson = geoJson;
         this._color = color;
+        this._objectClass = objectClass;
 
         this._onHoverDef = undefined;
         this._onHoverOffDef = undefined;

@@ -489,6 +489,8 @@ class App extends React.Component {
          **/
         Communicator.getMatch(text.trim(), this.state.currentSelected).then(res => {
             //als je een error terug krijgt, dan betekent dat je wel een antwoord hebt maar dat het niet werkt.
+            console.log(res);
+
             if (res === "error") {
                 this.setState({
                     isFetching: false
@@ -667,7 +669,7 @@ class App extends React.Component {
                         this.handleDeleteClick();
                     }}>
                         <div className="header">
-                            <h1>Basisregistratie Topografie</h1><img src={KadasterImg} alt="kadaster logo"/>
+                            <h1>BRT Namenzoeker</h1><img src={KadasterImg} alt="kadaster logo"/>
                         </div>
                     </Link>
                     <div className="searchBar">
