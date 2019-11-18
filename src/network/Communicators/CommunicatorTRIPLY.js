@@ -291,7 +291,7 @@ function mergeResults(exact, regex) {
 }
 
 async function queryTriply(query) {
-    return await fetch("https://data.labs.kadaster.nl/datasets/kadaster/brt/services/brt/sparql", {
+    return await fetch("https://api.labs.kadaster.nl/datasets/kadaster/brt/services/brt/sparql", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/sparql-query',
