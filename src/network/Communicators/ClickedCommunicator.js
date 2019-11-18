@@ -139,7 +139,6 @@ function makeSearchScreenResults(results) {
 }
 
 async function queryTriply(query) {
-    console.log(query);
     let result = await fetch("https://api.labs.kadaster.nl/datasets/kadaster/brt/services/brt/sparql", {
         method: 'POST',
         headers: {

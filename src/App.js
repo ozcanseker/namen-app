@@ -306,7 +306,6 @@ class App extends React.Component {
                 }).reverse().join(`<br/>`);
 
                 if(contains.length < 1){
-                    console.log("aa2");
                     this.map.closePopup();
                     this.popup = undefined;
                 }else if(this.popup){
@@ -489,7 +488,6 @@ class App extends React.Component {
          **/
         Communicator.getMatch(text.trim(), this.state.currentSelected).then(res => {
             //als je een error terug krijgt, dan betekent dat je wel een antwoord hebt maar dat het niet werkt.
-            console.log(res);
 
             if (res === "error") {
                 this.setState({

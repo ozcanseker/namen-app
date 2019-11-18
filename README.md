@@ -23,3 +23,5 @@ Als je een backend wilt toevoegen moet je naar de Communicator.js class kijken.
 //- Links in attributen naar Linked Data-URL’s blijken niet altijd te werken
 
 - Goed documenteren + zoveel mogelijk opzetten van de data
+
+-provincie naar beneden filteren.
