@@ -1,7 +1,6 @@
-import getIndexOfClasses from "../allClasses";
 import Resultaat from "../../model/Resultaat";
 import * as wellKnown from 'wellknown'
-import {firstLetterCapital, seperateUpperCase, stripUrlToType, veranderNaarJaNee} from '../ReformatMethods'
+import * as PreProcessor from "../ProcessorMethods";
 
 /**
  * Dit is het laatst ingetype string. zorgt ervoor dat je niet vorige resultaten rendert
@@ -23,7 +22,7 @@ export async function getMatch(text) {
     latestString = text;
 
     //doe hierna 2 queries. Eentje voor exacte match
-    let exactMatch = await queryPDOK(nameQueryExactMatchPDOK(firstLetterCapital(text)));
+    let exactMatch = await queryPDOK(nameQueryExactMatchPDOK(PreProcessor.firstLetterCapital(text)));
 
     //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
     if (latestString !== text) {
@@ -79,6 +78,10 @@ export async function getAllAttribtes(clickedRes) {
     let naamNl;
     let naamFries;
     let naamOfficieel;
+    let burgNaam;
+    let tunnelNaam;
+    let knoopPuntNaam;
+    let sluisNaam;
     let types = [];
     let overigeAttributen = [];
 
@@ -86,21 +89,29 @@ export async function getAllAttribtes(clickedRes) {
      * Ga langs elk attribuut en voeg deze toe aan de correct attribuut
      */
     for (let i = 0; i < nodes.length; i++) {
-        let key = stripUrlToType(nodes[i].prd.value);
+        let key = PreProcessor.stripUrlToType(nodes[i].prd.value);
         let value = nodes[i].obj.value;
 
-        if (key === "naam" || key === "brugnaam" || key === "tunnelnaam" || key === "sluisnaam" || key === "knooppuntnaam") {
-            if(key !== "naam"){
-                value = value.replace(/\|/g, "");
-            }
-
+        if (key === "naam") {
             naam = value;
+        }else if( key === "brugnaam"){
+            value = value.replace(/\|/g, "");
+            burgNaam = value;
+        } else if(key === "tunnelnaam"){
+            value = value.replace(/\|/g, "");
+            tunnelNaam = value;
+        }else if( key === "sluisnaam" ){
+            value = value.replace(/\|/g, "");
+            sluisNaam = value;
+        }else if( key === "knooppuntnaam"){
+            value = value.replace(/\|/g, "");
+            knoopPuntNaam = value;
         } else if (key === "naamNL") {
             naamNl = value;
         } else if (key === "naamFries") {
             naamFries = value;
         } else if (key === "type") {
-            types.push((stripUrlToType(value)));
+            types.push((PreProcessor.stripUrlToType(value)));
         } else if (key === "naamOfficieel") {
             naamOfficieel = value.replace(/\|/g, "");
         } else {
@@ -109,14 +120,14 @@ export async function getAllAttribtes(clickedRes) {
             if(key === "isBAGwoonplaats"){
                 formattedKey = "BAG-woonplaats";
             }else{
-                formattedKey = seperateUpperCase(key)
+                formattedKey = PreProcessor.seperateUpperCase(key)
             }
 
             if (key === "soortnaam" || key === "isBAGwoonplaats" || key === "bebouwdeKom" || key === "aantalinwoners" || key === "getijdeinvloed"
                 || key === "hoofdafwatering" || key === "isBAGnaam" || key === "elektrificatie" || key === "gescheidenRijbaan") {
 
                 if (key !== "aantalinwoners" && key !== "soortnaam") {
-                    value = veranderNaarJaNee(value);
+                    value = PreProcessor.veranderNaarJaNee(value);
                 }
                 overigeAttributen.unshift({key: (formattedKey), value: value});
             } else {
@@ -131,8 +142,8 @@ export async function getAllAttribtes(clickedRes) {
      */
     let indexes = [];
     for (let i = 0; i < types.length; i++) {
-        let index = getIndexOfClasses(types[i]);
-        let value = seperateUpperCase(types[i]);
+        let index = PreProcessor.getIndexOfClasses(types[i]);
+        let value = PreProcessor.seperateUpperCase(types[i]);
         indexes.push({index: index, type: value});
     }
 
@@ -143,7 +154,17 @@ export async function getAllAttribtes(clickedRes) {
     /**
      * Laad de attributen in de clicked res
      */
-    clickedRes.loadInAttributes(naam, naamOfficieel, naamNl, naamFries, [indexes[0].type], overigeAttributen);
+    clickedRes.loadInAttributes(naam,
+        naamOfficieel,
+        naamNl,
+        naamFries,
+        [indexes[0].type],
+        overigeAttributen,
+        burgNaam,
+        tunnelNaam,
+        sluisNaam,
+        knoopPuntNaam
+    );
 }
 
 /**
@@ -173,8 +194,14 @@ function makeSearchScreenResults(results) {
                 let naamPlaats;
                 let type;
                 let geojson;
+                let color;
+                let objectClass;
 
-                if(res.brugnaam || res.tunnelnaam || res.sluisnaam || res.knooppuntnaam){
+                if((res.brugnaam && res.brugnaam.value.toUpperCase().includes(latestString.toUpperCase()))
+                    || (res.tunnelnaam && res.tunnelnaam.value.toUpperCase().includes(latestString.toUpperCase()))
+                    || (res.sluisnaam && res.sluisnaam.value.toUpperCase().includes(latestString.toUpperCase()))
+                    || (res.knooppuntnaam && res.knooppuntnaam.value.toUpperCase().includes(latestString.toUpperCase()))
+                ){
                     if(res.brugnaam){
                         naamPlaats = res.brugnaam.value;
                     }else if(res.tunnelnaam){
@@ -210,8 +237,8 @@ function makeSearchScreenResults(results) {
 
                     //sorteer dit op basis van relevantie.
                     for (let j = 0; j < resOr.length; j++) {
-                        let value = stripUrlToType(resOr[j].type.value);
-                        let index = getIndexOfClasses(value);
+                        let value = PreProcessor.stripUrlToType(resOr[j].type.value);
+                        let index = PreProcessor.getIndexOfClasses(value);
                         indexes.push({index: index, type: value});
                     }
 
@@ -219,9 +246,11 @@ function makeSearchScreenResults(results) {
                         return a.index - b.index;
                     });
 
-
                     let value = indexes[0].type;
-                    type = seperateUpperCase(value);
+                    type = PreProcessor.seperateUpperCase(value);
+                    objectClass = PreProcessor.seperateUpperCase(indexes[indexes.length - 1].type);
+
+                    color = PreProcessor.getColor(indexes[indexes.length - 1].type);
                 }
 
                 //de wkt naar geojson
@@ -231,7 +260,7 @@ function makeSearchScreenResults(results) {
                 }
 
                 //zet secundaire properties/
-                resultaatObj.setSecondProperties(naamPlaats, type, geojson);
+                resultaatObj.setSecondProperties(naamPlaats, type, geojson, color, objectClass);
             } else {
                 console.log("error: ", resOr, resultaatObj);
             }
@@ -261,6 +290,19 @@ function mergeResults(exact, regex) {
     return exact.concat(regex);
 }
 
+async function queryPDOK(query) {
+    let result = await fetch("https://data.pdok.nl/sparql", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/sparql-query',
+            'Accept': 'application/sparql-results+json'
+        },
+        body: query
+    });
+
+    return result;
+}
+
 function nameQueryExactMatchPDOK(query) {
     return `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -283,7 +325,7 @@ function nameQueryForRegexMatch(queryString) {
               
               FILTER(REGEX(?label, "${queryString}", "i")).
             }
-            LIMIT 31
+            LIMIT 100
             `
 }
 
@@ -315,17 +357,4 @@ function allAttributesFromUrl(namedNode) {
             SELECT * WHERE {
                 <${namedNode}> ?prd ?obj.
             }`
-}
-
-async function queryPDOK(query) {
-    let result = await fetch("https://data.pdok.nl/sparql", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/sparql-query',
-            'Accept': 'application/sparql-results+json'
-        },
-        body: query
-    });
-
-    return result;
 }

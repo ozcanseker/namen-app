@@ -1,33 +1,16 @@
 /**
  * Houdt resultaat bij. Update de app als er iets verandert.
  */
-class ResultatenHouder {
+import Observable from "./Observable";
+import {isShownClickedResults, sortByObjectClass} from "../network/ProcessorMethods";
+
+class ResultatenHouder extends Observable{
     constructor(){
+        super();
+
         this._results = [];
-        this._doubleClickedResults = [];
+        this._rightClickedResults = [];
         this._clickedResult = undefined;
-
-        this._subscribers = [];
-    }
-
-    upDateSubScribers(){
-        this._subscribers.map(subscriber => subscriber.update());
-    }
-
-    /**
-     * Subscribe aan de resultaten houder.
-     * De gesubscribte class moet update implementeren.
-     * vergeet ook niet om te unsubscriben.
-     * @param subscriber
-     */
-    subscribe(subscriber){
-        this._subscribers.push(subscriber);
-    }
-
-    unsubscribe(subscriber){
-        this._subscribers.filter(subscriberList  => {
-            return subscriberList !== subscriber;
-        });
     }
 
     /**
@@ -37,7 +20,7 @@ class ResultatenHouder {
     setClickedResult(clicked){
         this._clickedResult = clicked;
         this._clickedResult.subscribe(this);
-        this.upDateSubScribers();
+        this.updateSubscribers();
     }
 
     getClickedResult(){
@@ -51,7 +34,7 @@ class ResultatenHouder {
         if(this._clickedResult){
             this._clickedResult.unsubscribe(this);
             this._clickedResult = undefined;
-            this.upDateSubScribers();
+            this.updateSubscribers();
         }
     }
 
@@ -70,13 +53,13 @@ class ResultatenHouder {
 
         this._results = [];
 
-        this._doubleClickedResults.forEach(res => {
+        this._rightClickedResults.forEach(res => {
             res.unsubscribe(this);
         })
 
-        this._doubleClickedResults = [];
+        this._rightClickedResults = [];
 
-        this.upDateSubScribers();
+        this.updateSubscribers();
     }
 
     /**
@@ -94,7 +77,7 @@ class ResultatenHouder {
         })
 
         this._results = results;
-        this.upDateSubScribers();
+        this.updateSubscribers();
     }
 
     getResults(){
@@ -111,7 +94,7 @@ class ResultatenHouder {
 
         this._results = [];
 
-        this.upDateSubScribers();
+        this.updateSubscribers();
     }
 
     /**
@@ -120,7 +103,7 @@ class ResultatenHouder {
      */
     setDoubleResults(results){
 
-        this._doubleClickedResults.forEach(res => {
+        this._rightClickedResults.forEach(res => {
             res.unsubscribe(this);
         })
 
@@ -128,29 +111,32 @@ class ResultatenHouder {
             res.subscribe(this);
         })
 
-        this._doubleClickedResults = results;
-        this.upDateSubScribers();
+        this._rightClickedResults = results;
+        this.updateSubscribers();
     }
 
-    getDoubleResults(){
-        return this._doubleClickedResults;
+    getRightClickedRes(){
+        return this._rightClickedResults;
     }
 
     /**
      * Clear de resultaten
      */
     clearDoubleResults(){
-        this._doubleClickedResults.forEach(res => {
+        this._rightClickedResults.forEach(res => {
             res.unsubscribe(this);
         })
 
-        this._doubleClickedResults = [];
+        this._rightClickedResults = [];
 
-        this.upDateSubScribers();
+        this.updateSubscribers();
     }
 
     update(){
-        this.upDateSubScribers();
+        sortByObjectClass(this._results);
+        sortByObjectClass(this._rightClickedResults);
+
+        this.updateSubscribers();
     }
 
     /**
@@ -164,15 +150,16 @@ class ResultatenHouder {
             if(res.getGeoJson()) {
                 geojson.push(res.getAsFeature());
             }
-        })
+        });
+
         return geojson;
     }
 
     getClickedAllObjectsAsFeature(){
         let geojson = [];
 
-        this._doubleClickedResults.forEach(res => {
-            if(res.getGeoJson() && res.getType() !== "Land" && res.getType() !== "Provincie") {
+        this._rightClickedResults.forEach(res => {
+            if(res.getGeoJson() && isShownClickedResults(res)) {
                 geojson.push(res.getAsFeature());
             }
         })

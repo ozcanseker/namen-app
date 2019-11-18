@@ -33,15 +33,41 @@ class ObjectScreen extends React.Component {
         let naam;
         let type;
         let tableNamen;
-        let tableRest
+        let tableRest;
+
 
         if (res) {
-            naam = (<h1>{res.getNaam()}</h1>);
-            type = (<h3>{res.getTypeString()}</h3>);
+            if(res.getNaam()){
+                naam = (<h1>{res.getNaam()}</h1>);
+            }else{
+                if(res.getTunnelNaam()){
+                    naam = (<h1>{res.getTunnelNaam()}</h1>);
+                }else if(res.getKnooppuntNaam()){
+                    naam = (<h1>{res.getKnooppuntNaam()}</h1>);
+                }else if(res.getBrugNaam()){
+                    naam = (<h1>{res.getBrugNaam()}</h1>);
+                }else if(res.getSluisNaam()){
+                    naam = (<h1>{res.getSluisNaam()}</h1>);
+                }
+            }
+
+
+            let color;
+
+            if(res.getColor()){
+                color = {color: this.props.getHexFromColor(res.getColor(), true)};
+            }
+
+            type = (<h3 style={color}>{res.getTypeString()}</h3>);
 
             let naamNl;
             let naamFries;
             let naamOfficeel;
+            let naam2;
+            let brugnaam;
+            let sluisnaam;
+            let knooppuntnaam;
+            let tunnelnaam;
 
             if (res.getNaamFries()) {
                 naamFries = (
@@ -61,11 +87,56 @@ class ObjectScreen extends React.Component {
                 )
             }
 
-            if (res.getNaamNl() || res.getNaamFries() === undefined) {
+            if (res.getNaamNl()) {
                 naamNl = (
                     <tr>
-                        <td><b>Naam Nederlands:</b></td>
-                        <td>{res.getNaamNl() ? res.getNaamNl() : res.getNaam()}</td>
+                         <td><b>Naam Nederlands:</b></td>
+                         <td>{res.getNaamNl()}</td>
+                     </tr>
+                )
+            }
+
+            if (res.getNaam() && !res.getNaamNl()) {
+                naam2 = (
+                    <tr>
+                        <td><b>Naam:</b></td>
+                        <td>{res.getNaam()}</td>
+                    </tr>
+                )
+            }
+
+            if (res.getTunnelNaam()) {
+                tunnelnaam = (
+                    <tr>
+                        <td><b>Tunnel naam:</b></td>
+                        <td>{res.getTunnelNaam()}</td>
+                    </tr>
+                )
+            }
+
+            if (res.getBrugNaam()) {
+                brugnaam = (
+                    <tr>
+                        <td><b>Brug naam:</b></td>
+                        <td>{res.getBrugNaam()}</td>
+                    </tr>
+                )
+            }
+
+            if (res.getSluisNaam()) {
+                sluisnaam = (
+                    <tr>
+                        <td><b>Sluis naam:</b></td>
+                        <td>{res.getSluisNaam()}</td>
+                    </tr>
+                )
+            }
+
+            if (res.getKnooppuntNaam()) {
+                knooppuntnaam = (
+                    <tr>
+                        <td><b>Knooppunt naam:</b></td>
+                        <td>{res.getKnooppuntNaam()}</td>
                     </tr>
                 )
             }
@@ -77,6 +148,11 @@ class ObjectScreen extends React.Component {
                             {naamOfficeel}
                             {naamNl}
                             {naamFries}
+                            {naam2}
+                            {tunnelnaam}
+                            {brugnaam}
+                            {sluisnaam}
+                            {knooppuntnaam}
                         </tbody>
                     </table>
                     <hr/>

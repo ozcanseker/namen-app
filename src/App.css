@@ -44,6 +44,23 @@ Map
   flex: 1;
 }
 
+.marker {
+  text-align: center;
+}
+
+.subTextMarker{
+  font-size: 80%;
+}
+
+.popUpMouseOver {
+  text-align: center;
+  font-size: 90%;
+}
+
+.popUpMouseOver > .subTextMarker {
+  font-size: 80%;
+}
+
 /*
 Linker deel
  */
@@ -152,16 +169,8 @@ ul {
   margin-bottom: 0%;
 }
 
-.marker {
-  text-align: center;
-}
-
 .subText{
   font-size: 80%;
-}
-
-.subTextMarker{
-  font-size: 60%;
 }
 
 .objectScreen {

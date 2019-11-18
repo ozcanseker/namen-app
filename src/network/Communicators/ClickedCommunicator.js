@@ -1,14 +1,13 @@
 import Resultaat from "../../model/Resultaat";
-import getIndexOfClasses from "../allClasses";
 import * as wellKnown from "wellknown";
-import {stripUrlToType, seperateUpperCase} from "../ReformatMethods";
+import * as PreProcessor from "../ProcessorMethods";
 
 export async function getFromCoordinates(lat, long, top, left, bottom, right) {
-    if (right - left > 0.1 || top - bottom > 0.0625) {
-        left = long - 0.01;
-        right = long + 0.01;
-        top = lat + 0.0300;
-        bottom = lat - 0.0300;
+    if (right - left > 0.05 || top - bottom > 0.0300) {
+        left = long - 0.025;
+        right = long + 0.025;
+        top = lat + 0.01500;
+        bottom = lat - 0.01500;
     }
 
     let exactMatch = await queryTriply(queryForCoordinates(top, left, bottom, right));
@@ -63,6 +62,8 @@ function makeSearchScreenResults(results) {
                 let naamPlaats;
                 let type;
                 let geojson;
+                let color;
+                let objectClass;
 
                 if (res.brugnaam || res.tunnelnaam || res.sluisnaam || res.knooppuntnaam) {
                     if (res.brugnaam) {
@@ -100,8 +101,8 @@ function makeSearchScreenResults(results) {
 
                     //sorteer dit op basis van relevantie.
                     for (let j = 0; j < resOr.length; j++) {
-                        let value = stripUrlToType(resOr[j].type.value);
-                        let index = getIndexOfClasses(value);
+                        let value = PreProcessor.stripUrlToType(resOr[j].type.value);
+                        let index = PreProcessor.getIndexOfClasses(value);
                         indexes.push({index: index, type: value});
                     }
 
@@ -111,7 +112,10 @@ function makeSearchScreenResults(results) {
 
 
                     let value = indexes[0].type;
-                    type = seperateUpperCase(value);
+                    type = PreProcessor.seperateUpperCase(value);
+                    objectClass = PreProcessor.seperateUpperCase(indexes[indexes.length - 1].type);
+
+                    color = PreProcessor.getColor(indexes[indexes.length - 1].type);
                 }
 
                 //de wkt naar geojson
@@ -121,7 +125,7 @@ function makeSearchScreenResults(results) {
                 }
 
                 //zet secundaire properties/
-                resultaatObj.setSecondProperties(naamPlaats, type, geojson);
+                resultaatObj.setSecondProperties(naamPlaats, type, geojson, color, objectClass);
             } else {
                 console.log("error: ", resOr, resultaatObj);
             }
@@ -132,6 +136,20 @@ function makeSearchScreenResults(results) {
     }
 
     return returnObject;
+}
+
+async function queryTriply(query) {
+    console.log(query);
+    let result = await fetch("https://api.labs.kadaster.nl/datasets/kadaster/brt/services/brt/sparql", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/sparql-query',
+            'Accept': 'application/sparql-results+json'
+        },
+        body: query
+    });
+
+    return result;
 }
 
 function queryForType(queryString) {
@@ -176,19 +194,6 @@ function queryForCoordinates(top, left, bottom, righ) {
                 BIND(bif:st_geomfromtext("POLYGON ((${left} ${bottom}, ${left} ${top}, ${righ} ${top}, ${righ} ${bottom}))") as ?yShape).
                 filter(bif:st_intersects(?xShape, ?yShape))
             }
-            limit 100
+            limit 200
             `
-}
-
-async function queryTriply(query) {
-    let result = await fetch("https://api.kadaster.triply.cc/datasets/kadaster/brt/services/brt/sparql", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/sparql-query',
-            'Accept': 'application/sparql-results+json'
-        },
-        body: query
-    });
-
-    return result;
 }
