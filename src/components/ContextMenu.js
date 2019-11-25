@@ -1,5 +1,6 @@
 import React from 'react';
 import './style/ContextMenu.scss'
+import _ from 'lodash';
 
 /**
  * Dit is het menu dat tervoorschijn komt als je op de kaart klikt met meerdere lagen.
@@ -17,12 +18,15 @@ class ContextMenu extends React.Component {
     componentDidMount() {
         //Kijk wat de hoogte en breedte is van de pagina wanneer deze component tevoorschijn komt.
         this.updateWindowDimensions();
-        window.addEventListener('resize', this.updateWindowDimensions);
+
+        this.updateWindowDimensionsDebounce = _.debounce(this.updateWindowDimensions, 200);
+
+        window.addEventListener('resize', this.updateWindowDimensionsDebounce);
     }
 
     componentWillUnmount() {
         //Unmount de listener als de applicatie sluit
-        window.removeEventListener('resize', this.updateWindowDimensions);
+        window.removeEventListener('resize', this.updateWindowDimensionsDebounce);
     }
 
     updateWindowDimensions = () => {

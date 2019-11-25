@@ -53,6 +53,20 @@ export function getColor(type){
     }
 }
 
+export function mergeObjects(list){
+    for (let i = 0; i < list.length; i++) {
+        for (let j = i; j < list.length; j++) {
+            if(shouldObjectMerge(list[i], list[j])){
+
+            }
+        }
+    }
+}
+
+export function shouldObjectMerge(obj1, obj2){
+    console.log(obj1, obj2);
+}
+
 /**
  * Used for layering
  * @param list

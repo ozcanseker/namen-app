@@ -5,6 +5,8 @@ import L from "leaflet";
 import React from 'react';
 import * as turf from '@turf/turf';
 import * as inside from "point-in-geopolygon";
+import _ from 'lodash';
+
 /**
  * UI
  */
@@ -92,15 +94,6 @@ class App extends React.Component {
             pointToLayer: this.addMarker,
             style: this.getStyle
         }).addTo(this.map);
-
-        // this.popup = L.popup({
-        //     autoPan: false,
-        //     closeButton: false
-        // })
-        //     .setLatLng([52.20936, 5.2])
-        //     .setContent("aaaaa")
-        //     .openOn(this.map);
-
 
         //de groep voor de markers
         this.markerGroup = L.featureGroup().addTo(this.map);
@@ -296,8 +289,7 @@ class App extends React.Component {
                 }
             });
 
-            //laat de pop up zien als je erover gaat
-            layer.on('mousemove', (e) => {
+            let mouseOverFunction =  (e) => {
                 let contains = this.getAllGeoJsonObjectContainingPoint(e.latlng.lng, e.latlng.lat);
 
                 let content = contains.map(res => {
@@ -325,7 +317,10 @@ class App extends React.Component {
                         .setContent(content)
                         .openOn(this.map);
                 }
-            });
+            }
+
+            //laat de pop up zien als je erover gaat
+            layer.on('mousemove', _.throttle(mouseOverFunction, 0));
 
             //sluit de pop up als je er van af gaat
             layer.on('mouseout', (e) => {
@@ -419,6 +414,20 @@ class App extends React.Component {
         return [lat, lon];
     };
 
+    onSearchChangeDebounce = (e, data) => {
+        let text = data.value;
+
+        this.setState({
+            searchQuery: text
+        });
+
+        if(!this.debounceFunction){
+            this.debounceFunction = _.debounce(this.onSearchChange, 350);
+        }
+
+        this.debounceFunction(e, data);
+    };
+
     /**
      * Wordt aangeroepen wanneer er iets wordt getype
      **/
@@ -431,9 +440,12 @@ class App extends React.Component {
         //als de text iets heef
         if (text) {
             //zet dan eerst de state
-            this.setState({
-                searchQuery: text
-            });
+
+            if(this.state.searchQuery !== text){
+                this.setState({
+                    searchQuery: text
+                });
+            }
 
             //haal vorige resultaten weg
             this.state.results.clearClickedResult();
@@ -675,7 +687,7 @@ class App extends React.Component {
                                 value={this.state.results.getRightClickedRes().length > 1 ? "[ Kaartresultaten worden getoond ]" : this.state.searchQuery}
                                 noResultsMessage="Geen resultaat"
                                 icon={icon}
-                                onSearchChange={this.onSearchChange}
+                                onSearchChange={this.onSearchChangeDebounce}
                                 open={false}
                                 onFocus={this.onFocus}
                         />

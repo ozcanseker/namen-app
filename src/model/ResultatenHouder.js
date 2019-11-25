@@ -49,13 +49,13 @@ class ResultatenHouder extends Observable{
 
         this._results.forEach(res => {
             res.unsubscribe(this);
-        })
+        });
 
         this._results = [];
 
         this._rightClickedResults.forEach(res => {
             res.unsubscribe(this);
-        })
+        });
 
         this._rightClickedResults = [];
 
@@ -70,11 +70,11 @@ class ResultatenHouder extends Observable{
 
         this._results.forEach(res => {
             res.unsubscribe(this);
-        })
+        });
 
         results.forEach(res => {
             res.subscribe(this);
-        })
+        });
 
         this._results = results;
         this.updateSubscribers();
@@ -90,7 +90,7 @@ class ResultatenHouder extends Observable{
     clearResults(){
         this._results.forEach(res => {
             res.unsubscribe(this);
-        })
+        });
 
         this._results = [];
 
@@ -105,11 +105,11 @@ class ResultatenHouder extends Observable{
 
         this._rightClickedResults.forEach(res => {
             res.unsubscribe(this);
-        })
+        });
 
         results.forEach(res => {
             res.subscribe(this);
-        })
+        });
 
         this._rightClickedResults = results;
         this.updateSubscribers();
@@ -162,7 +162,7 @@ class ResultatenHouder extends Observable{
             if(res.getGeoJson() && isShownClickedResults(res)) {
                 geojson.push(res.getAsFeature());
             }
-        })
+        });
         return geojson;
     }
 }
