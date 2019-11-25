@@ -24,4 +24,14 @@ Als je een backend wilt toevoegen moet je naar de Communicator.js class kijken.
 
 - Goed documenteren + zoveel mogelijk opzetten van de data
 
--provincie naar beneden filteren.
+{
+	waterlopen samenvoegen
+	bundel querie naar 1 ding.(object zit er meerdere keren in);
+}
+
+{
+	elastic search
+	kruisingen problemen/ kerst
+	extra versie simpel
+	begin eind exact and or
+}
