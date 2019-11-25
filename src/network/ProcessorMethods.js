@@ -73,6 +73,16 @@ export function shouldObjectMerge(obj1, obj2){
  */
 export function sortByObjectClass(list){
     list.sort((a , b) => {
+        if(a.getType() === "Provincie" || b.getType() === "Provincie"){
+            if(a.getType() === "Provincie" && b.getType() === "Provincie"){
+                return 0;
+            }else if(a.getType() === "Provincie"){
+                return -1;
+            }else {
+                return 1;
+            }
+        }
+
         if(a.getType() === "Gemeente" || b.getType() === "Gemeente"){
             if(a.getType() === "Gemeente" && b.getType() === "Gemeente"){
                 return 0;
