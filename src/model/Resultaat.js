@@ -66,7 +66,7 @@ class Resultaat extends Observable{
 
     /**
      * Geeft een feature object terug met zichzelf en geojson
-     * @returns {{geometry: GeoJson, type: string, properties: Resultaat}}
+     * @returns {{geometry: GeoJson, properties: Resultaat}}
      */
     getAsFeature(){
         return  {

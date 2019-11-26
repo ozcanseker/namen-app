@@ -1,5 +1,3 @@
-import getIndexOfClasses from "../allClasses";
-
 export async function getMatch(text) {
 
 }

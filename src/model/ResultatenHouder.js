@@ -77,7 +77,6 @@ class ResultatenHouder extends Observable{
         });
 
         this._results = results;
-        sortByObjectClass(this._results);
         this.updateSubscribers();
     }
 
@@ -113,7 +112,6 @@ class ResultatenHouder extends Observable{
 
         this._rightClickedResults = results;
 
-        sortByObjectClass(this._rightClickedResults);
         this.updateSubscribers();
     }
 
@@ -145,6 +143,8 @@ class ResultatenHouder extends Observable{
     getSearchedAllObjectsAsFeature(){
         let geojson = [];
 
+        sortByObjectClass(this._results);
+
         this._results.forEach(res => {
             if(res.getGeoJson()) {
                 geojson.push(res.getAsFeature());
@@ -156,6 +156,8 @@ class ResultatenHouder extends Observable{
 
     getClickedAllObjectsAsFeature(){
         let geojson = [];
+
+        sortByObjectClass(this._rightClickedResults);
 
         this._rightClickedResults.forEach(res => {
             if(res.getGeoJson() && isShownClickedResults(res)) {

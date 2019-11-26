@@ -5,7 +5,7 @@
 import Observable from "./Observable";
 
 class ClickedResultaat extends Observable {
-    constructor(res, naam, naamOfficieel, naamNl, naamFries, types, overige) {
+    constructor(res, naam, naamOfficieel, naamNl, naamFries, types, overige, burgNaam, tunnelNaam, sluisNaam, knoopPuntNaam) {
         super();
 
         this._res = res;
@@ -13,6 +13,10 @@ class ClickedResultaat extends Observable {
         this._naamOfficieel = naamOfficieel;
         this._naamNL = naamNl;
         this._naamFries = naamFries;
+        this._brugNaam = burgNaam;
+        this._tunnelNaam = tunnelNaam;
+        this._sluisNaam = sluisNaam;
+        this._knoopPuntNaam = knoopPuntNaam;
 
         if (types) {
             this._types = types;
@@ -23,7 +27,7 @@ class ClickedResultaat extends Observable {
         if (overige) {
             this._overige = overige;
             let url = this._res.getUrl();
-            this._overige.unshift({key: "brt link", value: url})
+            this._overige.unshift({key: "BRT link", value: url})
         } else {
             this._overige = [];
         }
@@ -52,6 +56,7 @@ class ClickedResultaat extends Observable {
     }
 
     /**
+     * Deze methode wordt gebruikt om extra informatie te laden die nodig is bij het tonen van het aangeklikt resultaat.
      *
      * @param naam String
      * @param naamOfficieel String
@@ -59,6 +64,10 @@ class ClickedResultaat extends Observable {
      * @param naamfries String
      * @param type array Strings
      * @param overige array {key: string, value: string}
+     * @param burgNaam
+     * @param tunnelNaam
+     * @param sluisNaam
+     * @param knoopPuntNaam
      */
     loadInAttributes(naam, naamOfficieel, naamnl, naamfries, type, overige, burgNaam, tunnelNaam, sluisNaam, knoopPuntNaam) {
         this._naam = naam;
@@ -126,6 +135,10 @@ class ClickedResultaat extends Observable {
 
     getKnooppuntNaam(){
         return this._knoopPuntNaam;
+    }
+
+    getRes(){
+        return this._res;
     }
 }
 

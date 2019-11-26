@@ -31,7 +31,7 @@ import ResultatenHouder from './model/ResultatenHouder';
 import ClickedResultaat from "./model/ClickedResultaat";
 import {DefaultIcon, Icons} from "./components/Icons";
 import ContextMenu from "./components/ContextMenu";
-import {checkIfMarkerShouldBePlaces, resetWaterLoopMap} from "./network/ProcessorMethods";
+import {checkIfMarkerShouldBePlaces, resetMapVariables} from "./network/ProcessorMethods";
 
 
 class App extends React.Component {
@@ -43,7 +43,7 @@ class App extends React.Component {
             isFetching: false,
             results: new ResultatenHouder(),
             updateIng: false,
-            currentSelected: "tsp",
+            currentSelected: Communicator.getOptions()[0].value,
             clickedOnLayeredMap: undefined,
             objectsOverLayedOnMap: []
         };
@@ -262,7 +262,7 @@ class App extends React.Component {
             //vindt eerst de center
             var latLong = this.getCenterGeoJson(feature);
 
-            if(checkIfMarkerShouldBePlaces(feature.properties)){
+            if (checkIfMarkerShouldBePlaces(feature.properties)) {
                 //op deze center voeg een marker toe
                 this.addMarker(feature, latLong);
             }
@@ -409,7 +409,8 @@ class App extends React.Component {
             if (!turf.booleanContains(geojson, centroid)) {
                 centroid = turf.centroid(geojson);
             }
-        } catch (e) {}
+        } catch (e) {
+        }
 
         //krijg de lat en long
         var lon = centroid.geometry.coordinates[0];
@@ -538,25 +539,6 @@ class App extends React.Component {
     };
 
     /**
-     * Krijg een timeout nummer gebasseerd op het aantal resultaten.
-     * @returns {number}
-     */
-    getTimeOut = () => {
-        let timeout = 100;
-        let results = this.state.results;
-
-        if (results.getResults().length > 40 || results.getRightClickedRes().length > 1) {
-            timeout = 600;
-        } else if (results.getResults().length > 20) {
-            timeout = 200;
-        } else if (results.getResults().length > 10) {
-            timeout = 100;
-        }
-
-        return timeout;
-    };
-
-    /**
      * Deze methode wordt aangeropen elke keer als de resultaten houder wordt geupdate.
      */
     update = () => {
@@ -566,29 +548,8 @@ class App extends React.Component {
             results: results
         });
 
-        //updateing variabele kijkt of de kaart nu bezig is met het wachten op updating/
-        if (!this.updateIng) {
-            this.updateIng = true;
 
-            //dit is voor de lader boven op de kaart
-            this.setState({
-                updateIng: true
-            });
-
-            //krijg een timeout ms
-            let timeout;
-
-            if (this.state.results.getClickedResult()) {
-                timeout = 0;
-            } else {
-                timeout = this.getTimeOut();
-            }
-
-            //hierna roep de de settimout aan
-            setTimeout(() => {
-                this.updateMap(results);
-            }, timeout);
-        }
+        this.updateMap(results);
     };
 
     dropDownSelector = (e, v) => {
@@ -611,7 +572,7 @@ class App extends React.Component {
         //haal eerst alle marker weg
         this.markerGroup.clearLayers();
         this.geoJsonLayer.clearLayers();
-        resetWaterLoopMap();
+        resetMapVariables();
 
         //als er een geklikt resultaat is, render dan alleen deze
         if (this.state.results.getClickedResult()) {
@@ -627,24 +588,44 @@ class App extends React.Component {
                 this.geoJsonLayer.addData(geoJsonResults);
             }
         }
-
-        //zet de updating naar false.
-        this.setState({
-            updateIng: false
-        });
-        this.updateIng = false;
-    }
+    };
 
     onFocus = () => {
-        if(this.state.results.getRightClickedRes().length > 0){
+        if (this.state.results.getRightClickedRes().length > 0) {
             this.handleDeleteClick();
-        }else if(this.state.results.getClickedResult()){
+        } else if (this.state.results.getClickedResult()) {
             this.handleOnBackButtonClick();
         }
     };
 
     render() {
+        let gearIcon;
+
         const options = Communicator.getOptions();
+
+        if(options.length > 1){
+            gearIcon = (<Dropdown
+                className="cogIcon"
+                icon='cog'
+                upward={true}
+            >
+                <Dropdown.Menu>
+                    <Dropdown.Header
+                        content="Selecteer end-point"
+                    />
+                    <Dropdown.Divider
+                    />
+                    {options.map((option) => (
+                        <Dropdown.Item
+                            className="dropDownItem"
+                            key={option.value} {...option}
+                            active={this.state.currentSelected === option.value}
+                            onClick={this.dropDownSelector}
+                        />
+                    ))}
+                </Dropdown.Menu>
+            </Dropdown>);
+        }
 
         let icon;
         let className;
@@ -701,27 +682,7 @@ class App extends React.Component {
                         </div>
                     </div>
                     <div className="footer">
-                        <Dropdown
-                            className="cogIcon"
-                            icon='cog'
-                            upward={true}
-                        >
-                            <Dropdown.Menu>
-                                <Dropdown.Header
-                                    content="Selecteer end-point"
-                                />
-                                <Dropdown.Divider
-                                />
-                                {options.map((option) => (
-                                    <Dropdown.Item
-                                        className="dropDownItem"
-                                        key={option.value} {...option}
-                                        active={this.state.currentSelected === option.value}
-                                        onClick={this.dropDownSelector}
-                                    />
-                                ))}
-                            </Dropdown.Menu>
-                        </Dropdown>
+                        {gearIcon}
                         <a href="https://zakelijk.kadaster.nl/brt" target="_blank" rel="noreferrer noopener">Lees meer
                             over de Basisregistratie Topografie (BRT)</a>
                     </div>

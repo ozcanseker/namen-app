@@ -303,12 +303,11 @@ export function sortByGeoMetryAndName(values, searchString) {
 
 let waterLoopMap;
 
-export function resetWaterLoopMap(){
+export function resetMapVariables(){
     waterLoopMap = new Map();
 }
 
 export function checkIfMarkerShouldBePlaces(object){
-
     if(object.getType() === "Waterloop"){
         let naam = object.getNaam();
 

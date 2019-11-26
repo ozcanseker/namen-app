@@ -19,13 +19,13 @@ class ContextMenu extends React.Component {
         //Kijk wat de hoogte en breedte is van de pagina wanneer deze component tevoorschijn komt.
         this.updateWindowDimensions();
 
+        //debounce zodat het niet tig keer wordt aangeroepen.
         this.updateWindowDimensionsDebounce = _.debounce(this.updateWindowDimensions, 200);
-
         window.addEventListener('resize', this.updateWindowDimensionsDebounce);
     }
 
     componentWillUnmount() {
-        //Unmount de listener als de applicatie sluit
+        //Unmount de listener als de component sluit
         window.removeEventListener('resize', this.updateWindowDimensionsDebounce);
     }
 
@@ -59,11 +59,12 @@ class ContextMenu extends React.Component {
                 left = this.state.widthPage - this.state.xMenu;
             }
 
+            //zelfde met laagte
             if ((this.state.heightPage - top) < this.state.yMenu) {
                 top = this.state.heightPage - this.state.yMenu;
             }
 
-            //de -10 is ervoor, als de gebruiker klikt zal deze altijd over de applicatie heen gaan.
+            // - 10 zodat de gebruiker altijd over de component heen hovert als deze geopend wordt
             myStyle = {
                 position: 'absolute',
                 top: `${top - 10}px`,
@@ -86,7 +87,7 @@ class ContextMenu extends React.Component {
             </p>);
         });
 
-        //geef de compoenent terug.
+        //geef de component terug.
         //als de gebruiker van de component af gaat, laat deze dan verdwijnen. zie onMouseLeave.
         return (<div style={myStyle}
                      className="contextMenuContainer"
@@ -99,8 +100,7 @@ class ContextMenu extends React.Component {
                      }}
                      onContextMenu={(e) => {
                          e.preventDefault();
-                     }}
-        >
+                     }}>
             {elements}
         </div>)
     }

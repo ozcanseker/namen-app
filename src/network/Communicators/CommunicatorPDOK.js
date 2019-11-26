@@ -1,9 +1,5 @@
-import Resultaat from "../../model/Resultaat";
-import * as wellKnown from 'wellknown'
 import * as PreProcessor from "../ProcessorMethods";
-import {sortByGeoMetryAndName} from "../ProcessorMethods";
-import {processSearchScreenResults} from "../ProcessorMethods";
-import {processGetAllAttributes} from "../ProcessorMethods";
+import {processGetAllAttributes, processSearchScreenResults} from "../ProcessorMethods";
 
 /**
  * Dit is het laatst ingetype string. zorgt ervoor dat je niet vorige resultaten rendert
@@ -123,7 +119,7 @@ function mergeResults(exact, regex) {
 }
 
 async function queryPDOK(query) {
-    let result = await fetch("https://data.pdok.nl/sparql", {
+    return await fetch("https://data.pdok.nl/sparql", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/sparql-query',
@@ -131,8 +127,6 @@ async function queryPDOK(query) {
         },
         body: query
     });
-
-    return result;
 }
 
 function nameQueryExactMatchPDOK(query) {
@@ -159,26 +153,6 @@ function nameQueryForRegexMatch(queryString) {
             }
             LIMIT 100
             `
-}
-
-function queryForType(queryString) {
-    return `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
-            PREFIX geo: <http://www.opengis.net/ont/geosparql#>
-
-            SELECT distinct * WHERE {
-               <${queryString}> a ?type
-             
-              Optional{<${queryString}> brt:naam ?naam.}.
-              Optional{<${queryString}> brt:naamNL ?naamNl.}.
-              Optional{<${queryString}> brt:naamFries ?naamFries}.
-              Optional{<${queryString}> brt:knooppuntnaam ?knooppuntnaam.}.
-              Optional{<${queryString}> brt:sluisnaam ?sluisnaam.}.
-              Optional{<${queryString}> brt:tunnelnaam ?tunnelnaam}.
-              Optional{<${queryString}> brt:brugnaam ?brugnaam.}.
-              Optional{<${queryString}> geo:hasGeometry/geo:asWKT ?wktJson}.       
-            }`
 }
 
 function queryBetterForType(values) {

@@ -163,27 +163,6 @@ function queryBetterForType(values) {
 `
 }
 
-function queryForType(queryString) {
-    return `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
-            PREFIX geo: <http://www.opengis.net/ont/geosparql#>
-
-            SELECT distinct * WHERE {
-               <${queryString}> a ?type
-             
-              Optional{<${queryString}> brt:naam ?naam.}.
-              Optional{<${queryString}> brt:naamNL ?naamNl.}.
-              Optional{<${queryString}> brt:naamFries ?naamFries}.
-              Optional{<${queryString}> brt:knooppuntnaam ?knooppuntnaam.}.
-              Optional{<${queryString}> brt:sluisnaam ?sluisnaam.}.
-              Optional{<${queryString}> brt:tunnelnaam ?tunnelnaam}.
-              Optional{<${queryString}> brt:brugnaam ?brugnaam.}.
-              Optional{<${queryString}> geo:hasGeometry/geo:asWKT ?wktJson}.       
-            }`
-}
-
-
 function queryForCoordinates(top, left, bottom, righ) {
     return `PREFIX geo: <http://www.opengis.net/ont/geosparql#>
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
