@@ -9,8 +9,6 @@ Als je een backend wilt toevoegen moet je naar de Communicator.js class kijken.
 - On Hover doet soms raar wanneer je over een provincie hovert.
 - Brugnamen, sluis, knooppunt en tunnelnamen worden niet meegenomen wanneer je rechts klikt op de kaart.
 
-
-
 ## TODO
 - Misschien kan dat nog aangepast worden? Brugnamen en knooppuntnamen worden ook nog niet gevonden als je rechts klikt in de kaart.
  
@@ -20,18 +18,13 @@ Als je een backend wilt toevoegen moet je naar de Communicator.js class kijken.
 
 //- Naar aanleiding van vorige punt: zoektips toevoegen in de beschrijving
 
-//- Links in attributen naar Linked Data-URL’s blijken niet altijd te werken
-
 - Goed documenteren + zoveel mogelijk opzetten van de data
 
-{
-	waterlopen samenvoegen
-	bundel querie naar 1 ding.(object zit er meerdere keren in);
-}
+- filter exact match to the top
 
 {
 	elastic search
-	kruisingen problemen/ kerst
 	extra versie simpel
 	begin eind exact and or
+	- Waar er nog pipetekens | | voorkomen om namen heen, bijv. bij attribuut soortnaam, deze weglaten. Ze lijken vooral voor te komen in de Triply-dataset van 2016, dus misschien is dit probleem al verholpen als Triply wordt bijgewerkt met de actuele Linked Dataset van de BRT.
 }

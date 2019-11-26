@@ -1,6 +1,9 @@
 import Resultaat from "../../model/Resultaat";
 import * as wellKnown from 'wellknown';
 import * as PreProcessor from "../ProcessorMethods";
+import {sortByGeoMetryAndName} from "../ProcessorMethods";
+import {processSearchScreenResults} from "../ProcessorMethods";
+import {processGetAllAttributes} from "../ProcessorMethods";
 
 /**
  * Dit is het laatst ingetype string. zorgt ervoor dat je niet vorige resultaten rendert
@@ -20,6 +23,7 @@ let latestString = "";
 export async function getMatch(text) {
     //update eerst de laatst ingetype string
     latestString = text;
+    console.log(text);
 
     //doe hierna 2 queries. Eentje voor exacte match
     let exactMatch = await queryTriply(nameQueryExactMatch(PreProcessor.firstLetterCapital(text)));
@@ -34,7 +38,7 @@ export async function getMatch(text) {
 
     //zet deze om in een array met Resultaat.js
     exactMatch = await exactMatch.text();
-    exactMatch = makeSearchScreenResults(JSON.parse(exactMatch));
+    exactMatch = await makeSearchScreenResults(JSON.parse(exactMatch));
 
     //Doe hierna nog een query voor dingen die op de ingetypte string lijken.
     let result = await queryTriply(nameQueryForRegexMatch(text));
@@ -47,7 +51,7 @@ export async function getMatch(text) {
 
     //zet netwerk res om in een array met Resultaat.js
     result = await result.text();
-    result = makeSearchScreenResults(JSON.parse(result));
+    result = await makeSearchScreenResults(JSON.parse(result));
 
     //voeg de arrays samen.
     return mergeResults(exactMatch, result);
@@ -72,99 +76,7 @@ export async function getAllAttribtes(clickedRes) {
     res = await res.text();
     res = JSON.parse(res);
 
-    let nodes = res.results.bindings;
-
-    let naam;
-    let naamNl;
-    let naamFries;
-    let naamOfficieel;
-    let types = [];
-    let overigeAttributen = [];
-    let burgNaam;
-    let tunnelNaam;
-    let knoopPuntNaam;
-    let sluisNaam;
-
-    /**
-     * Ga langs elk attribuut en voeg deze toe aan de correct attribuut
-     */
-    for (let i = 0; i < nodes.length; i++) {
-        let key = PreProcessor.stripUrlToType(nodes[i].prd.value);
-        let value = nodes[i].obj.value;
-
-        if (key === "naam") {
-            naam = value;
-        }else if( key === "brugnaam"){
-            value = value.replace(/\|/g, "");
-            burgNaam = value;
-        } else if(key === "tunnelnaam"){
-            value = value.replace(/\|/g, "");
-            tunnelNaam = value;
-        }else if( key === "sluisnaam" ){
-            value = value.replace(/\|/g, "");
-            sluisNaam = value;
-        }else if( key === "knooppuntnaam"){
-            value = value.replace(/\|/g, "");
-            knoopPuntNaam = value;
-        } else if (key === "naamNL") {
-            naamNl = value;
-        } else if (key === "naamFries") {
-            naamFries = value;
-        } else if (key === "type") {
-            types.push((PreProcessor.stripUrlToType(value)));
-        } else if (key === "naamOfficieel") {
-            naamOfficieel = value.replace(/\|/g, "");
-        } else {
-            let formattedKey;
-
-            if(key === "isBAGwoonplaats"){
-                formattedKey = "BAG-woonplaats";
-            }else{
-                formattedKey = PreProcessor.seperateUpperCase(key)
-            }
-
-            if (key === "soortnaam" || key === "isBAGwoonplaats" || key === "bebouwdeKom" || key === "aantalinwoners" || key === "getijdeinvloed"
-                || key === "hoofdafwatering" || key === "isBAGnaam" || key === "elektrificatie" || key === "gescheidenRijbaan") {
-
-                if (key !== "aantalinwoners" && key !== "soortnaam") {
-                    value = PreProcessor.veranderNaarJaNee(value);
-                }
-                overigeAttributen.unshift({key: (formattedKey), value: value});
-            } else {
-                overigeAttributen.push({key: (formattedKey), value: value});
-            }
-        }
-    }
-
-    /**
-     * Sorteer types van subclass naar hoofdclass
-     * @type {array van types}
-     */
-    let indexes = [];
-    for (let i = 0; i < types.length; i++) {
-        let index = PreProcessor.getIndexOfClasses(types[i]);
-        let value = PreProcessor.seperateUpperCase(types[i]);
-        indexes.push({index: index, type: value});
-    }
-
-    indexes.sort((a, b) => {
-        return a.index - b.index;
-    });
-
-    /**
-     * Laad de attributen in de clicked res
-     */
-    clickedRes.loadInAttributes(
-        naam,
-        naamOfficieel,
-        naamNl,
-        naamFries,
-        [indexes[0].type],
-        overigeAttributen,
-        burgNaam,
-        tunnelNaam,
-        sluisNaam,
-        knoopPuntNaam);
+    processGetAllAttributes(res, clickedRes);
 }
 
 /**
@@ -172,105 +84,26 @@ export async function getAllAttribtes(clickedRes) {
  * @param results
  * @returns {[]}
  */
-function makeSearchScreenResults(results) {
+async function makeSearchScreenResults(results) {
     results = results.results.bindings;
-    let returnObject = [];
 
+    let string = "";
     for (let i = 0; i < results.length; i++) {
-        //krijg eerst de uri.
-        let resultaatObj = new Resultaat(results[i].obj.value);
-
-        //hierna query specifiek op deze uri
-        queryTriply(queryForType(resultaatObj.getUrl())).then(async (resOr) => {
-            resOr = await resOr.text();
-
-            resOr = JSON.parse(resOr);
-            resOr = resOr.results.bindings;
-
-            //als er resultaten zijn
-            if (resOr.length !== 0) {
-                let res = resOr[0];
-
-                let naamPlaats;
-                let type;
-                let geojson;
-                let color;
-                let objectClass;
-
-                if((res.brugnaam && res.brugnaam.value.toUpperCase().includes(latestString.toUpperCase()))
-                    || (res.tunnelnaam && res.tunnelnaam.value.toUpperCase().includes(latestString.toUpperCase()))
-                    || (res.sluisnaam && res.sluisnaam.value.toUpperCase().includes(latestString.toUpperCase()))
-                    || (res.knooppuntnaam && res.knooppuntnaam.value.toUpperCase().includes(latestString.toUpperCase()))
-                ){
-                    if(res.brugnaam){
-                        naamPlaats = res.brugnaam.value;
-                    }else if(res.tunnelnaam){
-                        naamPlaats = res.tunnelnaam.value;
-                    }else if(res.sluisnaam){
-                        naamPlaats = res.sluisnaam.value;
-                    }else{
-                        naamPlaats = res.knooppuntnaam.value;
-                    }
-
-                    naamPlaats = naamPlaats.replace(/\|/g, "");
-                }else if (res.naamFries && res.naamFries.value.toUpperCase().includes(latestString.toUpperCase())) {
-                    //kijk of het resultaat niet undefined is. Kijk ook of het gezochte string een deel van de naam bevat.
-                    //Dit heb je nodig want bijvoorbeeld bij frieze namen moet de applicatie de frieze naam laten zien.
-                    naamPlaats = res.naamFries.value;
-                } else if (res.naamNl && res.naamNl.value.toUpperCase().includes(latestString.toUpperCase())) {
-                    naamPlaats = res.naamNl.value;
-                } else if (res.naam && res.naam.value.toUpperCase().includes(latestString.toUpperCase())) {
-                    naamPlaats = res.naam.value;
-                } else {
-                    if (res.naam) {
-                        naamPlaats = res.naam.value;
-                    } else if (res.naamNl) {
-                        naamPlaats = res.naamNl.value;
-                    } else if (res.naamFries) {
-                        naamPlaats = res.naamFries.value;
-                    }
-                }
-
-                //krijg de type
-                if (res.type !== undefined) {
-                    let indexes = [];
-
-                    //sorteer dit op basis van relevantie.
-                    for (let j = 0; j < resOr.length; j++) {
-                        let value = PreProcessor.stripUrlToType(resOr[j].type.value);
-                        let index = PreProcessor.getIndexOfClasses(value);
-                        indexes.push({index: index, type: value});
-                    }
-
-                    indexes.sort((a, b) => {
-                        return a.index - b.index;
-                    });
-
-                    let value = indexes[0].type;
-                    type = PreProcessor.seperateUpperCase(value);
-                    objectClass = PreProcessor.seperateUpperCase(indexes[indexes.length - 1].type);
-
-                    color = PreProcessor.getColor(indexes[indexes.length - 1].type);
-                }
-
-                //de wkt naar geojson
-                if (res.wktJson !== undefined) {
-                    let wktJson = res.wktJson.value;
-                    geojson = wellKnown.parse(wktJson);
-                }
-
-                //zet secundaire properties/
-                resultaatObj.setSecondProperties(naamPlaats, type, geojson, color, objectClass);
-            } else {
-                console.log("error: ", resOr, resultaatObj);
-            }
-
-        });
-
-        returnObject.push(resultaatObj);
+        string += `<${results[i].sub.value}>`;
     }
 
-    return returnObject;
+    let res = await queryTriply(queryBetterForType(string));
+
+    //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
+    if (res.status > 300) {
+        //bij een network error de string error
+        return "error";
+    }
+
+    res = await res.text();
+    res = JSON.parse(res);
+
+    return processSearchScreenResults(res, latestString);
 }
 
 /**
@@ -308,7 +141,7 @@ function nameQueryExactMatch(query) {
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
             
             SELECT distinct * WHERE {
-              {?obj brt:naamNL "${query}".} union {?obj brt:naam "${query}".} union {?obj brt:naamFries "${query}".} UNION {?obj brt:brugnaam "|${query}|"}  UNION {?obj brt:tunnelnaam "|${query}|"} UNION {?obj brt:sluisnaam "|${query}|"} UNION {?obj brt:knooppuntnaam "|${query}|"} UNION {?obj brt:naamOfficieel  "|${query}|"}.
+              {?sub brt:naamNL "${query}".} union {?sub brt:naam "${query}".} union {?sub brt:naamFries "${query}".} UNION {?sub brt:brugnaam "|${query}|"}  UNION {?sub brt:tunnelnaam "|${query}|"} UNION {?sub brt:sluisnaam "|${query}|"} UNION {?sub brt:knooppuntnaam "|${query}|"} UNION {?sub brt:naamOfficieel  "|${query}|"}.
             }
             LIMIT 990
 `
@@ -319,13 +152,38 @@ function nameQueryForRegexMatch(queryString) {
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
             
-            SELECT distinct ?obj WHERE {
-            { ?obj brt:naam ?label } UNION { ?obj brt:naamNL ?label } UNION {?obj brt:naamFries ?label} UNION {?obj brt:brugnaam ?label}  UNION {?obj brt:tunnelnaam ?label} UNION {?obj brt:sluisnaam ?label} UNION {?obj brt:knooppuntnaam ?label} UNION {?obj brt:naamOfficieel ?label}.
+            SELECT distinct ?sub WHERE {
+            { ?sub brt:naam ?label } UNION { ?sub brt:naamNL ?label } UNION {?sub brt:naamFries ?label} UNION {?sub brt:brugnaam ?label}  UNION {?sub brt:tunnelnaam ?label} UNION {?sub brt:sluisnaam ?label} UNION {?sub brt:knooppuntnaam ?label} UNION {?sub brt:naamOfficieel ?label}.
               
               FILTER(REGEX(?label, "${queryString}", "i")).
             }
             LIMIT 100
             `
+}
+
+function queryBetterForType(values) {
+    return `
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
+    PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+    
+    SELECT * WHERE {
+        VALUES ?s {
+           ${values}
+        }
+        ?s a ?type
+        
+  Optional{?s brt:naam ?naam.}.
+  Optional{?s brt:naamNL ?naamNl.}.
+  Optional{?s brt:naamFries ?naamFries}.
+  Optional{?s brt:knooppuntnaam ?knooppuntnaam.}.
+  Optional{?s brt:sluisnaam ?sluisnaam.}.
+  Optional{?s brt:tunnelnaam ?tunnelnaam}.
+  Optional{?s brt:brugnaam ?brugnaam.}.
+  Optional{?s geo:hasGeometry/geo:asWKT ?wktJson}.
+  }
+`
 }
 
 function queryForType(queryString) {

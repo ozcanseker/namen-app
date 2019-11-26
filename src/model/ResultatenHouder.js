@@ -77,6 +77,7 @@ class ResultatenHouder extends Observable{
         });
 
         this._results = results;
+        sortByObjectClass(this._results);
         this.updateSubscribers();
     }
 
@@ -102,7 +103,6 @@ class ResultatenHouder extends Observable{
      * @param results
      */
     setDoubleResults(results){
-
         this._rightClickedResults.forEach(res => {
             res.unsubscribe(this);
         });
@@ -112,6 +112,8 @@ class ResultatenHouder extends Observable{
         });
 
         this._rightClickedResults = results;
+
+        sortByObjectClass(this._rightClickedResults);
         this.updateSubscribers();
     }
 
@@ -133,9 +135,6 @@ class ResultatenHouder extends Observable{
     }
 
     update(){
-        sortByObjectClass(this._results);
-        sortByObjectClass(this._rightClickedResults);
-
         this.updateSubscribers();
     }
 
