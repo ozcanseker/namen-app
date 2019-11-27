@@ -7,6 +7,7 @@
 
 import * as wellKnown from "wellknown";
 import Resultaat from "../model/Resultaat";
+import * as turf from "@turf/turf";
 
 /**
  * Een file die alle classen van de brt bevat. Object klassen staan achter aan.
@@ -101,6 +102,9 @@ export function mergeObjects(list) {
  */
 export function sortByObjectClass(list) {
     list.sort((a, b) => {
+        a = a.properties;
+        b = b.properties;
+
         if (a.getType() === "Provincie" || b.getType() === "Provincie") {
             if (a.getType() === "Provincie" && b.getType() === "Provincie") {
                 return 0;
@@ -208,7 +212,6 @@ export function stripUrlToType(url) {
  * @returns {string}
  */
 export function seperateUpperCase(string) {
-    console.log(string);
     string = string.replace("_", " ");
 
     string = string.split(/(?=[A-Z])/);
@@ -294,36 +297,95 @@ export function sortByGeoMetryAndName(values, searchString) {
 
         return 0;
     });
-
-
-    if (values.length > 4) {
-        console.log(values);
-    }
 }
 
 let waterLoopMap;
 
-export function resetMapVariables(){
+export function resetMapVariables(res) {
     waterLoopMap = new Map();
+    //
+    // if (res !== undefined) {
+    //
+    //     for (let i = 0; i < res.length; i++) {
+    //         let naam = res[i].getNaam();
+    //
+    //         if (res[i].getType() === "Waterloop") {
+    //             if (waterLoopMap.has(naam)) {
+    //                 waterLoopMap.get(naam).push(res[i]);
+    //             } else {
+    //                 waterLoopMap.set(naam, [res[i]]);
+    //             }
+    //         }
+    //     }
+    //
+    //     let valuesMap = new Map();
+    //
+    //     waterLoopMap.forEach((value, key, map) => {
+    //         let afsdasd = 0;
+    //
+    //         while (value.length > 0) {
+    //             let currentBatch = [value[0]];
+    //             value.splice(0, 1);
+    //
+    //             valuesMap.set(currentBatch[0].getNaam() + afsdasd, currentBatch);
+    //             afsdasd++;
+    //
+    //             let keepgoingBool = true;
+    //             let hasInterserted = false;
+    //
+    //             let i = 0;
+    //
+    //             while (keepgoingBool && value.length !== 0) {
+    //                 let intersects;
+    //
+    //                 //check of huidige i grenst aan de huide waterlopen
+    //                 for (let j = 0; j < currentBatch.length; j++) {
+    //                     console.log(i, value.length);
+    //                     let inter = turf.intersect(currentBatch[j].getGeoJson(), value[i].getGeoJson());
+    //                     if (inter) {
+    //                         intersects = true;
+    //                         hasInterserted = true;
+    //                     }
+    //                 }
+    //
+    //                 //als die deze doet
+    //                 if (intersects) {
+    //                     currentBatch.push(value[i]);
+    //                     value.splice(i, 1);
+    //                 } else {
+    //                     i++;
+    //                 }
+    //
+    //                 if (i >= value.length && hasInterserted) {
+    //                     i = 0;
+    //                     hasInterserted = false;
+    //                 } else if (i >= value.length) {
+    //                     keepgoingBool = false;
+    //                 }
+    //             }
+    //         }
+    //
+    //         console.log(valuesMap);
+    //     });
+    // }
 }
 
-export function checkIfMarkerShouldBePlaces(object){
-    if(object.getType() === "Waterloop"){
+export function checkIfMarkerShouldBePlaces(object) {
+    if (object.getType() === "Waterloop") {
         let naam = object.getNaam();
 
-        if(waterLoopMap.has(naam)){
+        if (waterLoopMap.has(naam)) {
             return false;
-        }else{
+        } else {
             waterLoopMap.set(naam, undefined);
             return true;
         }
-    }else {
+    } else {
         return true;
     }
-
 }
 
-export function processSearchScreenResults(res, latestString){
+export function processSearchScreenResults(res, latestString) {
     let returnObject = [];
     res = res.results.bindings;
     let map = new Map();
@@ -414,7 +476,7 @@ export function processSearchScreenResults(res, latestString){
     return returnObject;
 }
 
-export function processGetAllAttributes(res, clickedRes){
+export function processGetAllAttributes(res, clickedRes) {
     let nodes = res.results.bindings;
 
     let naam;
@@ -462,7 +524,7 @@ export function processGetAllAttributes(res, clickedRes){
 
             if (key === "isBAGwoonplaats") {
                 formattedKey = "BAG-woonplaats";
-            }else if(key === "aantalinwoners"){
+            } else if (key === "aantalinwoners") {
                 formattedKey = "Aantal inwoners"
             } else {
                 formattedKey = seperateUpperCase(key)

@@ -98,6 +98,12 @@ class App extends React.Component {
 
         //de groep voor de markers
         this.markerGroup = L.featureGroup().addTo(this.map);
+
+        this.map.on('dragstart', () => {
+            if (this.state.clickedOnLayeredMap) {
+                this.setState({clickedOnLayeredMap: undefined});
+            }
+        });
     };
 
     getStyle = (feature) => {
@@ -548,8 +554,11 @@ class App extends React.Component {
             results: results
         });
 
+        if (!this.updateMapDebounce) {
+            this.updateMapDebounce = _.debounce(this.updateMap, 200);
+        }
 
-        this.updateMap(results);
+        this.updateMapDebounce(results);
     };
 
     dropDownSelector = (e, v) => {
@@ -572,7 +581,14 @@ class App extends React.Component {
         //haal eerst alle marker weg
         this.markerGroup.clearLayers();
         this.geoJsonLayer.clearLayers();
-        resetMapVariables();
+
+        if (this.state.results.getClickedResult()) {
+            resetMapVariables(undefined);
+        } else if (this.state.results.getRightClickedRes().length > 0) {
+            resetMapVariables(this.state.results.getRightClickedRes());
+        } else {
+            resetMapVariables(resetMapVariables(this.state.results.getResults()));
+        }
 
         //als er een geklikt resultaat is, render dan alleen deze
         if (this.state.results.getClickedResult()) {
@@ -603,7 +619,7 @@ class App extends React.Component {
 
         const options = Communicator.getOptions();
 
-        if(options.length > 1){
+        if (options.length > 1) {
             gearIcon = (<Dropdown
                 className="cogIcon"
                 icon='cog'

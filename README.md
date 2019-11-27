@@ -12,8 +12,6 @@ endpoints kiezen.
 
 ## TODO's
 - Brugnamen, sluis, knooppunt en tunnelnamen worden niet meegenomen wanneer je rechts klikt op de kaart.
-
-- Misschien kan dat nog aangepast worden? Brugnamen en knooppuntnamen worden ook nog niet gevonden als je rechts klikt in de kaart.
  
 - Aantal zoekresultaten weergeven boven de resultatenlijst
 
@@ -23,9 +21,9 @@ endpoints kiezen.
 
 - Goed documenteren + zoveel mogelijk opzetten van de data
 
-- Ik bedacht me dat we hiermee ook onze kwaliteit kunnen controleren. Als er in een waterloop met een naam een waterdeel tussen zit dat geen naam heeft, krijg je wel een tweede marker, wat een signaal is dat er ergens een waterdeel tussen zit dat nog de naam moet krijgen. Maar het is dus wel belangrijk dat alleen van aangrenzende objecten de markers weggelaten worden.
+- Is het bijv. een optie om de zoomknopjes anders in te bouwen, zodat de nieuwe iPads niet de neiging hebben dat knopje te selecteren? Ik weet niet wat op die nieuwe iPads dat zoomknopje triggert, misschien kun jij dat achterhalen?
 
-- {
+{
 	elastic search  
 	extra versie simpel  
 	begin eind exact and or  
