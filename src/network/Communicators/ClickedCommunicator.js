@@ -3,6 +3,16 @@ import * as wellKnown from "wellknown";
 import * as PreProcessor from "../ProcessorMethods";
 import {sortByGeoMetryAndName} from "../ProcessorMethods";
 
+/**
+ * Haalt dingen op aan de hand van de gegeven coordinaten.
+ * @param lat
+ * @param long
+ * @param top
+ * @param left
+ * @param bottom
+ * @param right
+ * @returns {Promise<string|[]>}
+ */
 export async function getFromCoordinates(lat, long, top, left, bottom, right) {
     if (right - left > 0.05 || top - bottom > 0.0300) {
         left = long - 0.025;
@@ -13,23 +23,28 @@ export async function getFromCoordinates(lat, long, top, left, bottom, right) {
 
     let exactMatch = await queryTriply(queryForCoordinates(top, left, bottom, right));
 
-    //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
     if (exactMatch.status > 300) {
         //bij een network error de string error
         return "error";
     }
 
-    //zet deze om in een array met Resultaat.js
+    //Zet deze om in een array met Resultaat.js
     exactMatch = await exactMatch.text();
     exactMatch = await makeSearchScreenResults(JSON.parse(exactMatch));
 
     return exactMatch;
 }
 
+/**
+ * Zet de sparql json resulaten om in een Resultaat.js array
+ * @param results
+ * @returns {Promise<string|[]>}
+ */
 async function makeSearchScreenResults(results) {
     results = results.results.bindings;
     let returnObject = [];
 
+    //maak de query
     let string = "";
     for (let i = 0; i < results.length; i++) {
         string += `<${results[i].sub.value}>`;
@@ -37,16 +52,18 @@ async function makeSearchScreenResults(results) {
 
     let res = await queryTriply(queryBetterForType(string));
 
-    //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
     if (res.status > 300) {
         //bij een network error de string error
         return "error";
     }
 
+    //verwerk de query
     res = await res.text();
     res = JSON.parse(res);
     res = res.results.bindings;
 
+    // de query zorgt ervoor dat meerdere keren hetzelfde object wordt terug gegeven. Hierdoor moet je ze bij elkaar rapen
+    //De key voor de map is de linked data url
     let map = new Map();
 
     for (let i = 0; i < res.length; i++) {
@@ -59,10 +76,14 @@ async function makeSearchScreenResults(results) {
         }
     }
 
-
+    /**
+     * Voor elke object
+     */
     map.forEach((valueMap, key, map) => {
         let naam, type, geoJson, color, objectClass;
 
+        //dit sorteert de resultaten op gemeomety en dan naam.
+        //dus groot eerst
         sortByGeoMetryAndName(valueMap);
 
         let fO = valueMap[0];

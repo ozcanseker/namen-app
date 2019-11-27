@@ -63,7 +63,7 @@ export async function getMatch(text) {
  */
 export async function getAllAttribtes(clickedRes) {
     /**
-     * Haal alle attributen van
+     * Haal alle attributen van deze url
      */
     let url = clickedRes.getUrl();
 

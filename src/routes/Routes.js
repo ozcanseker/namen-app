@@ -6,7 +6,6 @@ import ResultScreen from "./pages/ResultScreen";
 import ObjectScreen from "./pages/ObjectScreen";
 
 class Routes extends React.Component {
-
     render() {
         return (
             <Switch>
@@ -17,7 +16,6 @@ class Routes extends React.Component {
                                                      onClickItem={this.props.onClickItem}
                                                      getHexFromColor={this.props.getHexFromColor}/>}
                 />
-
                 <Route
                     exact path="/result/:id"
                     render={(props) => <ObjectScreen clickedResult=

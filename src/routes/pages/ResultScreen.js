@@ -2,7 +2,6 @@ import React from 'react';
 
 class ResultScreen extends React.Component {
     render() {
-
         let results = this.props.res.getRightClickedRes().length > 0 ? this.props.res.getRightClickedRes() : this.props.res.getResults();
 
         let elements = results.map(res => {

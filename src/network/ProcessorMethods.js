@@ -2,12 +2,15 @@
  * Deze file bevat alle methodes die door meerdere communicators gebruikt worden. bijv first letter capital
  *
  * Ook bevindt zich in deze file alle "leterlijke strings" dus bijv "Gemeente" die ik niet in de front end wou zetten.
+ *
  * Hierdoor blijft de front end hopelijk stabiel terwijl je deze file alleen hoeft te veranderen wil je de functionialtier veranderen.
+ *
+ * Hier zitten ook een aantal methodes in die door de front end worden aangeroepen.
  */
 
 import * as wellKnown from "wellknown";
 import Resultaat from "../model/Resultaat";
-import * as turf from "@turf/turf";
+// import * as turf from "@turf/turf";
 
 /**
  * Een file die alle classen van de brt bevat. Object klassen staan achter aan.
@@ -71,33 +74,8 @@ export function getColor(type) {
     }
 }
 
-export function mergeObjects(list) {
-    let waterlopen = new Map();
-    let returnObject = [];
-
-    for (let i = 0; i < list.length; i++) {
-        let value = list[i].getNaam();
-
-        if (list[i].getType() === "Waterloop") {
-            if (waterlopen.has(value)) {
-                waterlopen.get(value).push(list[i]);
-            } else {
-                waterlopen.set(value, [list[i]]);
-            }
-        } else {
-            returnObject.push(list[i]);
-        }
-    }
-
-    waterlopen.forEach((value, key, map) => {
-
-    });
-
-    return returnObject;
-}
-
 /**
- * Used for layering
+ * Wordt door de front-end gebruikt om de layering te bepalen.
  * @param list
  */
 export function sortByObjectClass(list) {
@@ -212,6 +190,7 @@ export function stripUrlToType(url) {
  * @returns {string}
  */
 export function seperateUpperCase(string) {
+    //haal ook underscores weg
     string = string.replace("_", " ");
 
     string = string.split(/(?=[A-Z])/);
@@ -225,7 +204,7 @@ export function seperateUpperCase(string) {
 }
 
 /**
- * Verandert een 1 en 0 naar ja en nee.
+ * Verandert een 1 of true naar ja. ander nee
  * @param string
  * @returns {string}
  */
@@ -236,13 +215,19 @@ export function veranderNaarJaNee(string) {
     return "nee";
 }
 
+/**
+ * Sorteert op naam en dan geometry
+ * Vooral gemaakt voor straten.
+ * @param values
+ * @param searchString
+ */
 export function sortByGeoMetryAndName(values, searchString) {
     if (searchString) {
         searchString = searchString.toUpperCase();
     }
 
-
     values.sort((a, b) => {
+        //kijk eerst of de gezochte string zich bevindt in de naam
         if (a.naam && b.naam && searchString) {
             let naama = a.naam.value.toUpperCase();
             let naamb = b.naam.value.toUpperCase();
@@ -254,6 +239,7 @@ export function sortByGeoMetryAndName(values, searchString) {
             }
         }
 
+        //sorteer op geometry
         let aGeo = a.wktJson.value;
         let bGeo = b.wktJson.value;
 
@@ -340,7 +326,7 @@ export function resetMapVariables(res) {
     //
     //                 //check of huidige i grenst aan de huide waterlopen
     //                 for (let j = 0; j < currentBatch.length; j++) {
-    //                     console.log(i, value.length);
+    //
     //                     let inter = turf.intersect(currentBatch[j].getGeoJson(), value[i].getGeoJson());
     //                     if (inter) {
     //                         intersects = true;
@@ -385,6 +371,12 @@ export function checkIfMarkerShouldBePlaces(object) {
     }
 }
 
+/**
+ * 
+ * @param res
+ * @param latestString
+ * @returns {[]}
+ */
 export function processSearchScreenResults(res, latestString) {
     let returnObject = [];
     res = res.results.bindings;

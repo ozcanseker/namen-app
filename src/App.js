@@ -14,16 +14,19 @@ import Routes from './routes/Routes'
 import {Dropdown, Icon, Search} from 'semantic-ui-react'
 import NavBar from "./components/NavBar";
 import Loader from "./components/Loader";
+
 /**
  * Assets
  */
 import './App.css';
 import KadasterImg from './assets/Logo-kadaster.png';
+
 /**
  * Netwerk
  */
 import *  as Communicator from './network/Communicator';
 import {Link, matchPath, withRouter} from "react-router-dom";
+
 /**
  * Model
  */
@@ -32,7 +35,6 @@ import ClickedResultaat from "./model/ClickedResultaat";
 import {DefaultIcon, Icons} from "./components/Icons";
 import ContextMenu from "./components/ContextMenu";
 import {checkIfMarkerShouldBePlaces, resetMapVariables} from "./network/ProcessorMethods";
-
 
 class App extends React.Component {
     constructor(props) {
@@ -85,6 +87,7 @@ class App extends React.Component {
         //Wanneer je dubbelklikt op de kaart krijg dan alle locaties terug er om heen.
         this.map.on('contextmenu', this.handleRightMouseClick);
 
+        //disable the zoom
         this.map.doubleClickZoom.disable();
 
         //zet de geojson layer en de functies die worden aangeroepen.
@@ -99,6 +102,7 @@ class App extends React.Component {
         //de groep voor de markers
         this.markerGroup = L.featureGroup().addTo(this.map);
 
+        //dit is voor mobiele applicatie. Als er gesleept wordt sluit dan het context menu.
         this.map.on('dragstart', () => {
             if (this.state.clickedOnLayeredMap) {
                 this.setState({clickedOnLayeredMap: undefined});
@@ -106,6 +110,11 @@ class App extends React.Component {
         });
     };
 
+    /**
+     * Krijg de style voor een bepaalde feature
+     * @param feature
+     * @returns {{color: (string|*)}}
+     */
     getStyle = (feature) => {
         if (feature.properties.getColor()) {
             return {
@@ -114,6 +123,12 @@ class App extends React.Component {
         }
     };
 
+    /**
+     * Krijg een hex van een kleur.
+     * @param color
+     * @param text bool of het tekst is of niet
+     * @returns {string|undefined}
+     */
     getHexFromColor(color, text) {
         if (color === "turqoise") {
             if (text) {
@@ -151,43 +166,46 @@ class App extends React.Component {
     }
 
     /**
-     * Handel de dubbel klik.
-     * Als je op de dubbel klikt op de kaart krijg je alle nabije namen.
-     * Moet nog geimplemteert worden.
+     * Als je recht klikt op de kaart. Haal resulataten op en laat deze zien.
      **/
     handleRightMouseClick = (e) => {
         let latLong = e.latlng;
 
+        //close pop ups van de kaart
         this.map.closePopup();
         this.popup = undefined;
 
+        /**
+         * Kijk of de gebruiker op de ObjectScreen zit
+         */
         let match = matchPath(this.props.location.pathname, {
             path: "/result/:id",
             exact: true,
             strict: true
         });
 
-        this.setState({
-            searchQuery: ""
-        });
         this.state.results.clearAll();
 
+        /**
+         * Als de gebruiker op een object screen zit ga dan terug.
+         */
         if (match) {
             this.props.history.goBack();
         } else if (this.props.location.pathname !== "/result") {
             this.props.history.push(`/result`);
         }
 
-        let bounds = this.map.getBounds();
-
         this.setState({
-            isFetching: true
+            isFetching: true,
+            searchQuery: ""
         });
 
+        /**
+         * Krijg de bounds en geef deze ook door aan de communicator
+         */
+        let bounds = this.map.getBounds();
         Communicator.getFromCoordinates(latLong.lat, latLong.lng, bounds.getNorth(), bounds.getWest(), bounds.getSouth(), bounds.getEast()).then(res => {
-            if (res === "error") {
-
-            } else if (res !== undefined) {
+            if (res !== undefined && res !== "error") {
                 this.state.results.setDoubleResults(res);
                 this.setState({
                     isFetching: false
@@ -224,6 +242,7 @@ class App extends React.Component {
 
         //wanner je over de marker gaat laat de pop up zien
         marker.on('mouseover', onHover);
+        //geef deze ook aan de feature zodat wanneer je over de resultaten lijst gaat het ook op de kaart te zien is.
         feature.properties._setOnHover(onHover);
 
         //wanneer je er van af gaat laat het weg
@@ -238,6 +257,12 @@ class App extends React.Component {
         return marker;
     };
 
+    /**
+     * Krijg alle geojson objecten die in de resultatenhouder zit waar dit punt in zit.
+     * @param lng
+     * @param lat
+     * @returns {*[]}
+     */
     getAllGeoJsonObjectContainingPoint = (lng, lat) => {
         let res;
 
@@ -261,13 +286,15 @@ class App extends React.Component {
     };
 
     /**
-     * Tekent de objecten op de kaart.
+     * Wordt aangeroepen elke keer als er een geojson object wordt getekend.
      **/
     handleGeoJsonLayerDrawing = (feature, layer) => {
+        //de punt wordt al afgehandeld door addMarker
         if (feature.geometry.type !== 'Point') {
             //vindt eerst de center
             var latLong = this.getCenterGeoJson(feature);
 
+            //Kijk eerst of de programmeur wel wilt dat er een marker wordt geplaatst.
             if (checkIfMarkerShouldBePlaces(feature.properties)) {
                 //op deze center voeg een marker toe
                 this.addMarker(feature, latLong);
@@ -298,6 +325,7 @@ class App extends React.Component {
                 }
             });
 
+            //dit is de functie die wordt aangeroepen als je over een object heen gaat met je muis.
             let mouseOverFunction = (e) => {
                 let contains = this.getAllGeoJsonObjectContainingPoint(e.latlng.lng, e.latlng.lat);
 
@@ -328,7 +356,7 @@ class App extends React.Component {
                 }
             };
 
-            //laat de pop up zien als je erover gaat
+            //Je kan ervoor kiezen om deze functionalitier te trottelen.
             layer.on('mousemove', _.throttle(mouseOverFunction, 0));
 
             //sluit de pop up als je er van af gaat
@@ -339,13 +367,14 @@ class App extends React.Component {
 
             //als je er op klikt ga er dan naartoe
             layer.on('click', (e) => {
+                //check of er meerdere lagen zijn
                 let contains = this.getAllGeoJsonObjectContainingPoint(e.latlng.lng, e.latlng.lat);
 
+                //als er maar één laag is
                 if (contains.length < 2) {
                     this.onClickItem(feature.properties)
                 } else {
-                    //open hier iets
-
+                    //agrageer de opties en geef deze aan het context menu
                     let options = contains.reverse().map(res => {
                         let func = () => {
                             this.onClickItem(res.properties);
@@ -368,6 +397,9 @@ class App extends React.Component {
         }
     };
 
+    /**
+     * Deze methode kan worden aangeroepen om het context menu te laten verdrwijnen.
+     */
     resetClickedOnLayeredMap = () => {
         this.setState({
             clickedOnLayeredMap: undefined
@@ -375,7 +407,7 @@ class App extends React.Component {
     };
 
     /**
-     * Wanneer iemand op een marker of getekend deel klikt, voer deze methode uit.
+     * Wanneer iemand op een resultaat klikt vor dan deze methode uit.
      **/
     onClickItem = (res) => {
         //maak een nieuwe clickedresultaat
@@ -447,6 +479,7 @@ class App extends React.Component {
             this.state.results.clearClickedResult();
             this.state.results.clearDoubleResults();
 
+            //debounce zodat het pas wordt uitgevoerd wanneer de gebuiker stopt met typen.
             if (!this.debounceDoSearch) {
                 this.debounceDoSearch = _.debounce(this.doSearch, 500);
             }
@@ -554,6 +587,9 @@ class App extends React.Component {
             results: results
         });
 
+        /**
+         * Soms wordt de update functie iets te vaak angereoepen dus debounce het
+         */
         if (!this.updateMapDebounce) {
             this.updateMapDebounce = _.debounce(this.updateMap, 200);
         }
@@ -561,6 +597,11 @@ class App extends React.Component {
         this.updateMapDebounce(results);
     };
 
+    /**
+     * Wordt aangeroepen als er op het tandwieltje wordt geklikt.
+     * @param e
+     * @param v
+     */
     dropDownSelector = (e, v) => {
         if (this.state.currentSelected !== v.value) {
             this.setState({
@@ -582,6 +623,7 @@ class App extends React.Component {
         this.markerGroup.clearLayers();
         this.geoJsonLayer.clearLayers();
 
+        //dit is nog een work in progress. Dit kan je best verwijderen.
         if (this.state.results.getClickedResult()) {
             resetMapVariables(undefined);
         } else if (this.state.results.getRightClickedRes().length > 0) {
@@ -606,6 +648,9 @@ class App extends React.Component {
         }
     };
 
+    /**
+     * Wordt aangeroepen wanneer iemand op de zoekbalk klikt.
+     */
     onFocus = () => {
         if (this.state.results.getRightClickedRes().length > 0) {
             this.handleDeleteClick();
@@ -614,11 +659,30 @@ class App extends React.Component {
         }
     };
 
+    getZoekResultatenAantal = () => {
+        let aantalZoekResultaten;
+
+        if (this.state.results.getClickedResult()) {
+
+        } else if (this.state.results.getRightClickedRes().length > 0) {
+            aantalZoekResultaten = this.state.results.getRightClickedRes().length;
+        } else {
+            aantalZoekResultaten = this.state.results.getResults().length;
+        }
+
+        if(aantalZoekResultaten > 989){
+            aantalZoekResultaten = 900 + "+";
+        }
+
+        return aantalZoekResultaten;
+    }
+
     render() {
+        let aantalZoekResultaten = this.getZoekResultatenAantal();
+
         let gearIcon;
 
         const options = Communicator.getOptions();
-
         if (options.length > 1) {
             gearIcon = (<Dropdown
                 className="cogIcon"
@@ -682,6 +746,7 @@ class App extends React.Component {
                         <NavBar
                             loading={this.state.isFetching}
                             onBack={this.handleOnBackButtonClick}
+                            aantalZoekResultaten = {aantalZoekResultaten}
                         />
                         <div className="loaderDiv">
                             <Loader

@@ -54,7 +54,7 @@ Color is de kleur die getoond wordt op de kaart. Dit kunnen één van de volgend
 ## getAllAttribtes()  
 Deze methode wordt aangeroepen als er op een object wordt geklikt. Deze methode krijgt een ClickedResultaat.js object terug waarop is geklikt.
 Dus vanaf de uri kan je weer alle andere attributen ophalen. De applicatie verwacht dat je deze attributen met de loadInAttributes() aanvult. De methode verwacht de volgende argumenten : 
-naam, naamOfficieel, naamnl, naamfries, type, overige, burgNaam, tunnelNaam, sluisNaam, knoopPuntNaam.  
+naam, naamOfficieel, naamnl, naamfries, type, overige, burgNaam, tunnelNaam, sluisNaam, knoopPuntNaam.  De type en overige zijn arrays. De overige verwacht een array met {key: string, value: string}.
   
 De namen zijn verschillende namen die het object kan hebben. De type is de het type object. Overige zijn alle overige attributen. **De type en overige zijn array's**
 

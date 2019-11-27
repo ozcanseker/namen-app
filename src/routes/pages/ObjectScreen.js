@@ -15,7 +15,7 @@ class ObjectScreen extends React.Component {
     }
 
     /**
-     * Alle alle gegevens op van de clickedResult.
+     * Haal alle gegevens op van de clickedResult.
      * @param url
      */
     getNamenGegevens = (url) => {

@@ -20,7 +20,6 @@ let latestString = "";
 export async function getMatch(text) {
     //update eerst de laatst ingetype string
     latestString = text;
-    console.log(text);
 
     //doe hierna 2 queries. Eentje voor exacte match
     let exactMatch = await queryTriply(nameQueryExactMatch(PreProcessor.firstLetterCapital(text)));

@@ -20,23 +20,25 @@ class StartScreen extends React.Component {
                     Je kunt op twee manieren zoeken:
                 </p>
 
-                    <ol>
-                        <li>
-                            Tik in het zoekveld hierboven een naam in en de resultaten verschijnen direct in een lijst
-                            én
-                            als object in de kaart hiernaast. Je vindt namen die exact gelijk zijn aan je zoekterm, maar
-                            ook namen die je zoekterm bevatten. Het maximumaantal resultaten is 990.
-                        </li>
-                        <li>
-                            Of klik met je rechtermuisknop in de kaart en alle objecten met een naam in de buurt
-                            verschijnen
-                            in de kaart en in een lijst met resultaten. Zo kun je elke naam vinden, zelfs als je ‘m nog
-                            niet
-                            kent!
-                        </li>
-                    </ol><br/>
+                <ol>
+                    <li>
+                        Tik in het zoekveld hierboven een naam in en de resultaten verschijnen direct in een lijst
+                        én
+                        als object in de kaart hiernaast. Je vindt namen die exact gelijk zijn aan je zoekterm, maar
+                        ook namen die je zoekterm bevatten. Het maximumaantal resultaten is 990.
+                    </li>
+                    <li>
+                        Of klik met je rechtermuisknop in de kaart (bij een aanraakscherm je vinger twee seconden op de
+                        kaart houden) en alle objecten met een naam in de buurt
+                        verschijnen
+                        in de kaart en in een lijst met resultaten. Zo kun je elke naam vinden, zelfs als je ‘m nog
+                        niet
+                        kent!
+                    </li>
+                </ol>
+                <br/>
 
-                    <p className="explainText">
+                <p className="explainText">
                     Als je een zoekresultaat aanklikt, krijg je aanvullende informatie over het bijbehorende object te
                     zien. Bij welk object hoort de naam, wat is de functie, hoeveel inwoners heeft je stad of dorp, wat
                     is de oppervlakte van een gebied? De antwoorden vind je hier.
@@ -71,8 +73,6 @@ class StartScreen extends React.Component {
                     een tikfout gemaakt wordt. We zien graag je reactie op de BRT Namenzoeker op het <a
                     href="https://geoforum.nl/" target="_blank"
                     rel="noreferrer noopener">Geoforum.nl</a>.
-
-
                 </p>
             </div>
         )

@@ -5,6 +5,20 @@
 import Observable from "./Observable";
 
 class ClickedResultaat extends Observable {
+    /**
+     *
+     * @param res het resultaat dat is aangeklikt
+     * @param naam
+     * @param naamOfficieel
+     * @param naamNl
+     * @param naamFries
+     * @param types [] van types
+     * @param overige [{key: string, value: string}] van overige attributen
+     * @param burgNaam
+     * @param tunnelNaam
+     * @param sluisNaam
+     * @param knoopPuntNaam
+     */
     constructor(res, naam, naamOfficieel, naamNl, naamFries, types, overige, burgNaam, tunnelNaam, sluisNaam, knoopPuntNaam) {
         super();
 
@@ -18,6 +32,7 @@ class ClickedResultaat extends Observable {
         this._sluisNaam = sluisNaam;
         this._knoopPuntNaam = knoopPuntNaam;
 
+        //types is een array, je kan meerdere dingen toevoegen.
         if (types) {
             this._types = types;
         } else {
@@ -56,14 +71,12 @@ class ClickedResultaat extends Observable {
     }
 
     /**
-     * Deze methode wordt gebruikt om extra informatie te laden die nodig is bij het tonen van het aangeklikt resultaat.
-     *
-     * @param naam String
-     * @param naamOfficieel String
-     * @param naamnl String
-     * @param naamfries String
-     * @param type array Strings
-     * @param overige array {key: string, value: string}
+     * @param naam
+     * @param naamOfficieel
+     * @param naamnl
+     * @param naamfries
+     * @param type [] van types
+     * @param overige [{key: string, value: string}] van overige attributen
      * @param burgNaam
      * @param tunnelNaam
      * @param sluisNaam

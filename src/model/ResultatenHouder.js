@@ -67,7 +67,6 @@ class ResultatenHouder extends Observable{
      * @param results
      */
     setResults(results){
-
         this._results.forEach(res => {
             res.unsubscribe(this);
         });
@@ -88,13 +87,15 @@ class ResultatenHouder extends Observable{
      * Clear de resultaten
      */
     clearResults(){
-        this._results.forEach(res => {
-            res.unsubscribe(this);
-        });
+        if(this._results.length > 0){
+            this._results.forEach(res => {
+                res.unsubscribe(this);
+            });
 
-        this._results = [];
+            this._results = [];
 
-        this.updateSubscribers();
+            this.updateSubscribers();
+        }
     }
 
     /**
@@ -123,13 +124,15 @@ class ResultatenHouder extends Observable{
      * Clear de resultaten
      */
     clearDoubleResults(){
-        this._rightClickedResults.forEach(res => {
-            res.unsubscribe(this);
-        })
+        if(this._rightClickedResults.length > 0){
+            this._rightClickedResults.forEach(res => {
+                res.unsubscribe(this);
+            });
 
-        this._rightClickedResults = [];
+            this._rightClickedResults = [];
 
-        this.updateSubscribers();
+            this.updateSubscribers();
+        }
     }
 
     update(){

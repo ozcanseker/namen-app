@@ -21,8 +21,6 @@ endpoints kiezen.
 
 - Goed documenteren + zoveel mogelijk opzetten van de data
 
-- Is het bijv. een optie om de zoomknopjes anders in te bouwen, zodat de nieuwe iPads niet de neiging hebben dat knopje te selecteren? Ik weet niet wat op die nieuwe iPads dat zoomknopje triggert, misschien kun jij dat achterhalen?
-
 {
 	elastic search  
 	extra versie simpel  

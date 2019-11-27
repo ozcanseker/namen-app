@@ -59,7 +59,7 @@ class ContextMenu extends React.Component {
                 left = this.state.widthPage - this.state.xMenu;
             }
 
-            //zelfde met laagte
+            //zelfde met hoogte
             if ((this.state.heightPage - top) < this.state.yMenu) {
                 top = this.state.heightPage - this.state.yMenu;
             }
