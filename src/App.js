@@ -34,7 +34,6 @@ import ResultatenHouder from './model/ResultatenHouder';
 import ClickedResultaat from "./model/ClickedResultaat";
 import {DefaultIcon, Icons} from "./components/Icons";
 import ContextMenu from "./components/ContextMenu";
-import {checkIfMarkerShouldBePlaces, resetMapVariables} from "./network/ProcessorMethods";
 
 class App extends React.Component {
     constructor(props) {
@@ -294,11 +293,8 @@ class App extends React.Component {
             //vindt eerst de center
             var latLong = this.getCenterGeoJson(feature);
 
-            //Kijk eerst of de programmeur wel wilt dat er een marker wordt geplaatst.
-            if (checkIfMarkerShouldBePlaces(feature.properties)) {
                 //op deze center voeg een marker toe
                 this.addMarker(feature, latLong);
-            }
 
             //laat de pop up zien als je erover gaat
             layer.on('mouseover', (e) => {
@@ -622,15 +618,6 @@ class App extends React.Component {
         //haal eerst alle marker weg
         this.markerGroup.clearLayers();
         this.geoJsonLayer.clearLayers();
-
-        //dit is nog een work in progress. Dit kan je best verwijderen.
-        if (this.state.results.getClickedResult()) {
-            resetMapVariables(undefined);
-        } else if (this.state.results.getRightClickedRes().length > 0) {
-            resetMapVariables(this.state.results.getRightClickedRes());
-        } else {
-            resetMapVariables(resetMapVariables(this.state.results.getResults()));
-        }
 
         //als er een geklikt resultaat is, render dan alleen deze
         if (this.state.results.getClickedResult()) {

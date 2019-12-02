@@ -2,6 +2,7 @@ import Resultaat from "../../model/Resultaat";
 import * as wellKnown from "wellknown";
 import * as PreProcessor from "../ProcessorMethods";
 import {sortByGeoMetryAndName} from "../ProcessorMethods";
+import {clusterObjects} from "../ProcessorMethods";
 
 /**
  * Haalt dingen op aan de hand van de gegeven coordinaten.
@@ -143,7 +144,7 @@ async function makeSearchScreenResults(results) {
         returnObject.push(resultaatObj);
     });
 
-    return returnObject;
+    return clusterObjects(returnObject);
 }
 
 async function queryTriply(query) {

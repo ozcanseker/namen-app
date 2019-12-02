@@ -11,19 +11,22 @@ endpoints kiezen.
 - de [Docs](./docs/docs.md) beschrijven hoe de applicatie is opgezet en wat je moet veranderen om van backend te veranderen.  
 
 ## TODO's
+- clusteren van waterlopen + straatnamen
+
 - Brugnamen, sluis, knooppunt en tunnelnamen worden niet meegenomen wanneer je rechts klikt op de kaart.
- 
-- Aantal zoekresultaten weergeven boven de resultatenlijst
 
-- Zoekopties bieden: optie om alleen op hele woorden, of op het exacte woord te zoeken. Zoeken met aanhalingstekens, plusjes etc. Dan zou je bijv. een resultaatkaartje kunnen genereren waar alleen jouw exacte zoekterm in voorkomt, om (als schermafbeelding) te kunnen gebruiken in een presentatie
+- zoeken met plus.
 
-- Naar aanleiding van vorige punt: zoektips toevoegen in de beschrijving
+- map cluster
 
-- Goed documenteren + zoveel mogelijk opzetten van de data
-
-{
-	elastic search  
-	extra versie simpel  
-	begin eind exact and or  
-	Waar er nog pipetekens | | voorkomen om namen heen, bijv. bij attribuut soortnaam, deze weglaten. Ze lijken vooral voor te komen in de Triply-dataset van 2016, dus misschien is dit probleem al verholpen als Triply wordt bijgewerkt met de actuele Linked Dataset van de BRT.  
-}
+- {
+    Ik heb nog wel één bevinding. De pin wordt voor polygonen in het centroid gezet. Voor sommige langgerekte polygonen kan dit leiden tot een centroid buiten het polygoon zelf, zoals je op de 2 onderstaande screenshots ziet. Weet jij nog een manier om deze centroid binnen het polygoon zelf te krijgen?
+  }
+  
+- {
+    elastic search  
+    extra versie simpel  
+    begin eind exact and or  
+    Waar er nog pipetekens | | voorkomen om namen heen, bijv. bij attribuut soortnaam, deze weglaten. Ze lijken vooral voor te komen in de Triply-dataset van 2016, dus misschien is dit probleem al verholpen als Triply wordt bijgewerkt met de actuele Linked Dataset van de BRT.  
+    Naar aanleiding van vorige punt: zoektips toevoegen in de beschrijving
+  }

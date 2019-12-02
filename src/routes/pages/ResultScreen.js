@@ -1,4 +1,5 @@
 import React from 'react';
+import Resultaat from "../../model/Resultaat";
 
 class ResultScreen extends React.Component {
     render() {
@@ -23,7 +24,7 @@ class ResultScreen extends React.Component {
                     {res.getType() ? res.getType() : String.fromCharCode(32)}</p>);
             }
 
-            return (<li key={res.getUrl() + res.getNaam()}
+            return (<li key={res instanceof Resultaat ? res.getUrl() + res.getNaam() : res.getNaam + res.getValues()[0].getUrl()}
                         className="liResultScreen"
                         onClick={() => {this.props.onClickItem(res)}}
                         onMouseEnter={() => {res._onHover()}}

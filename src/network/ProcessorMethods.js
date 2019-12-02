@@ -10,7 +10,8 @@
 
 import * as wellKnown from "wellknown";
 import Resultaat from "../model/Resultaat";
-// import * as turf from "@turf/turf";
+import * as turf from "@turf/turf";
+import ClusterObject from "../model/ClusterObject";
 
 /**
  * Een file die alle classen van de brt bevat. Object klassen staan achter aan.
@@ -285,94 +286,151 @@ export function sortByGeoMetryAndName(values, searchString) {
     });
 }
 
-let waterLoopMap;
+export function clusterObjects(res) {
+    return res;
+    let stratenMap = new Map();
+    let waterLopenMap = new Map();
 
-export function resetMapVariables(res) {
-    waterLoopMap = new Map();
-    //
-    // if (res !== undefined) {
-    //
-    //     for (let i = 0; i < res.length; i++) {
-    //         let naam = res[i].getNaam();
-    //
-    //         if (res[i].getType() === "Waterloop") {
-    //             if (waterLoopMap.has(naam)) {
-    //                 waterLoopMap.get(naam).push(res[i]);
-    //             } else {
-    //                 waterLoopMap.set(naam, [res[i]]);
-    //             }
-    //         }
-    //     }
-    //
-    //     let valuesMap = new Map();
-    //
-    //     waterLoopMap.forEach((value, key, map) => {
-    //         let afsdasd = 0;
-    //
-    //         while (value.length > 0) {
-    //             let currentBatch = [value[0]];
-    //             value.splice(0, 1);
-    //
-    //             valuesMap.set(currentBatch[0].getNaam() + afsdasd, currentBatch);
-    //             afsdasd++;
-    //
-    //             let keepgoingBool = true;
-    //             let hasInterserted = false;
-    //
-    //             let i = 0;
-    //
-    //             while (keepgoingBool && value.length !== 0) {
-    //                 let intersects;
-    //
-    //                 //check of huidige i grenst aan de huide waterlopen
-    //                 for (let j = 0; j < currentBatch.length; j++) {
-    //
-    //                     let inter = turf.intersect(currentBatch[j].getGeoJson(), value[i].getGeoJson());
-    //                     if (inter) {
-    //                         intersects = true;
-    //                         hasInterserted = true;
-    //                     }
-    //                 }
-    //
-    //                 //als die deze doet
-    //                 if (intersects) {
-    //                     currentBatch.push(value[i]);
-    //                     value.splice(i, 1);
-    //                 } else {
-    //                     i++;
-    //                 }
-    //
-    //                 if (i >= value.length && hasInterserted) {
-    //                     i = 0;
-    //                     hasInterserted = false;
-    //                 } else if (i >= value.length) {
-    //                     keepgoingBool = false;
-    //                 }
-    //             }
-    //         }
-    //
-    //         console.log(valuesMap);
-    //     });
-    // }
-}
+    for (let i = res.length - 1; i >= 0; i--) {
+        let naam = res[i].getNaam();
 
-export function checkIfMarkerShouldBePlaces(object) {
-    if (object.getType() === "Waterloop") {
-        let naam = object.getNaam();
+        if (res[i].getObjectClass() === "Wegdeel") {
+            if (stratenMap.has(naam)) {
+                stratenMap.get(naam).push(res[i]);
+            } else {
+                stratenMap.set(naam, [res[i]]);
+            }
 
-        if (waterLoopMap.has(naam)) {
-            return false;
-        } else {
-            waterLoopMap.set(naam, undefined);
-            return true;
+            res.splice(i , 1);
         }
-    } else {
-        return true;
+
+        if (res[i].getType() === "Waterloop") {
+            if (waterLopenMap.has(naam)) {
+                waterLopenMap.get(naam).push(res[i]);
+            } else {
+                waterLopenMap.set(naam, [res[i]]);
+            }
+
+            res.splice(i , 1);
+        }
     }
+
+    let clusterMap = new Map();
+
+    stratenMap.forEach((value, key, map) => {
+        let afsdasd = 0;
+
+        while (value.length > 0) {
+            let currentBatch = [value[0]];
+            value.splice(0, 1);
+
+            clusterMap.set(currentBatch[0].getNaam() + " " + afsdasd, currentBatch);
+            afsdasd++;
+
+            let keepgoingBool = true;
+            let hasInterserted = false;
+
+            let i = 0;
+
+            while (keepgoingBool && value.length !== 0) {
+                let intersects;
+
+                //check of huidige i grenst aan de huide waterlopen
+                for (let j = 0; j < currentBatch.length && !intersects; j++) {
+                    let geo = value[i].getGeoJson();
+
+                    let inter = turf.lineIntersect(currentBatch[j].getGeoJson(), geo);
+
+                    if (inter.features.length > 0) {
+                        intersects = true;
+                        hasInterserted = true;
+                    }
+                }
+
+                //als die deze doet
+                if (intersects) {
+                    currentBatch.push(value[i]);
+                    value.splice(i, 1);
+                } else {
+                    i++;
+                }
+
+                if (i >= value.length && hasInterserted) {
+                    i = 0;
+                    hasInterserted = false;
+                } else if (i >= value.length) {
+                    keepgoingBool = false;
+                }
+            }
+        }
+    });
+
+    waterLopenMap.forEach((value, key) => {
+        clusterMap.set(key ,value);
+    });
+
+    console.log(clusterMap);
+
+    let clusters = [];
+
+    //createClusters
+    clusterMap.forEach(value => {
+        let first = value[0];
+        let geoJson = [];
+        let hasPolyGone = false;
+        let hasLineString = false;
+
+        for (let i = 0; i < value.length && (!hasPolyGone || !hasLineString); i++) {
+            if("Polygon" === value[i].getGeoJson().type){
+                hasPolyGone = true;
+            }else if("LineString" === value[i].getGeoJson().type){
+                hasLineString = true;
+            }
+        }
+
+        if(hasPolyGone && hasLineString){
+            value.forEach(value => {
+                let geo  = value.getGeoJson();
+                if("Polygon" === geo.type){
+                    value.setGeoJson(turf.polygonToLine(geo).geometry);
+                }
+            })
+        }
+
+        value.forEach(value => {
+            geoJson.push(value.getGeoJson());
+        });
+
+        let features = [];
+        geoJson.forEach(res => {
+            features.push(
+                {
+                    type: 'Feature',
+                    geometry: res
+                }
+            )
+        });
+
+        if(geoJson.length > 1){
+            if(first.getGeoJson().type === "Polygon"){
+                geoJson = turf.union(...features).geometry;
+            }else{
+                let coordinates = turf.getCoords(geoJson);
+
+                geoJson = turf.multiLineString(coordinates).geometry;
+            }
+        }else{
+            geoJson = first.getGeoJson();
+        }
+
+        clusters.push(new ClusterObject(first.getNaam(), first.getType(), geoJson, value, first.getColor(), first.getObjectClass()));
+    });
+
+    return clusters.concat(res);
 }
 
 /**
- * 
+ *
  * @param res
  * @param latestString
  * @returns {[]}
@@ -465,7 +523,7 @@ export function processSearchScreenResults(res, latestString) {
         returnObject.push(resultaatObj);
     });
 
-    return returnObject;
+    return clusterObjects(returnObject);
 }
 
 export function processGetAllAttributes(res, clickedRes) {

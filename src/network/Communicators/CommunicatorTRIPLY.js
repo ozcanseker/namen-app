@@ -18,6 +18,9 @@ let latestString = "";
  * de query nog niet veroudert is, Kan ook de string "error" terug krijgen. Dit is wanneer er een netwerk error is.
  */
 export async function getMatch(text) {
+    let isExactMatch = text.match(/".*"/);
+    text = text.replace(/"/g, "");
+
     //update eerst de laatst ingetype string
     latestString = text;
 
@@ -35,6 +38,10 @@ export async function getMatch(text) {
     //zet deze om in een array met Resultaat.js
     exactMatch = await exactMatch.text();
     exactMatch = await makeSearchScreenResults(JSON.parse(exactMatch));
+
+    if (isExactMatch) {
+        return exactMatch;
+    }
 
     //Doe hierna nog een query voor dingen die op de ingetypte string lijken.
     let result = await queryTriply(nameQueryForRegexMatch(text));
