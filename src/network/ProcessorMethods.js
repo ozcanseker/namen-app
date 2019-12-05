@@ -12,6 +12,7 @@ import * as wellKnown from "wellknown";
 import Resultaat from "../model/Resultaat";
 import * as turf from "@turf/turf";
 import ClusterObject from "../model/ClusterObject";
+import {geoJson} from "leaflet/dist/leaflet-src.esm";
 
 /**
  * Een file die alle classen van de brt bevat. Object klassen staan achter aan.
@@ -288,142 +289,60 @@ export function sortByGeoMetryAndName(values, searchString) {
 
 export function clusterObjects(res) {
     return res;
-    let stratenMap = new Map();
-    let waterLopenMap = new Map();
+    let map = new Map();
 
     for (let i = res.length - 1; i >= 0; i--) {
         let naam = res[i].getNaam();
 
-        if (res[i].getObjectClass() === "Wegdeel") {
-            if (stratenMap.has(naam)) {
-                stratenMap.get(naam).push(res[i]);
+        if (res[i].getType() === "Waterloop" || res[i].getObjectClass() === "Wegdeel") {
+            if (map.has(naam)) {
+                map.get(naam).push(res[i]);
             } else {
-                stratenMap.set(naam, [res[i]]);
+                map.set(naam, [res[i]]);
             }
 
-            res.splice(i , 1);
-        }
-
-        if (res[i].getType() === "Waterloop") {
-            if (waterLopenMap.has(naam)) {
-                waterLopenMap.get(naam).push(res[i]);
-            } else {
-                waterLopenMap.set(naam, [res[i]]);
-            }
-
-            res.splice(i , 1);
+            res.splice(i, 1);
         }
     }
 
     let clusterMap = new Map();
 
-    stratenMap.forEach((value, key, map) => {
-        let afsdasd = 0;
+    map.forEach((value, key, map) => {
+        let mapCounter = 0;
 
         while (value.length > 0) {
-            let currentBatch = [value[0]];
-            value.splice(0, 1);
+            let eerste = value.shift();
+            let cluster = [eerste];
 
-            clusterMap.set(currentBatch[0].getNaam() + " " + afsdasd, currentBatch);
-            afsdasd++;
+            clusterMap.set(eerste.getNaam() + mapCounter, cluster);
+            mapCounter++;
 
-            let keepgoingBool = true;
-            let hasInterserted = false;
-
-            let i = 0;
-
-            while (keepgoingBool && value.length !== 0) {
-                let intersects;
-
-                //check of huidige i grenst aan de huide waterlopen
-                for (let j = 0; j < currentBatch.length && !intersects; j++) {
-                    let geo = value[i].getGeoJson();
-
-                    let inter = turf.lineIntersect(currentBatch[j].getGeoJson(), geo);
+            for (let i = 0; i < cluster.length; i++) {
+                for (let j = value.length - 1; j >= 0; j--) {
+                    let inter = turf.lineIntersect(cluster[i].getGeoJson(), value[j].getGeoJson());
 
                     if (inter.features.length > 0) {
-                        intersects = true;
-                        hasInterserted = true;
+                        cluster.push(value[j]);
+                        value.splice(j, 1);
                     }
-                }
-
-                //als die deze doet
-                if (intersects) {
-                    currentBatch.push(value[i]);
-                    value.splice(i, 1);
-                } else {
-                    i++;
-                }
-
-                if (i >= value.length && hasInterserted) {
-                    i = 0;
-                    hasInterserted = false;
-                } else if (i >= value.length) {
-                    keepgoingBool = false;
                 }
             }
         }
     });
-
-    waterLopenMap.forEach((value, key) => {
-        clusterMap.set(key ,value);
-    });
-
-    console.log(clusterMap);
 
     let clusters = [];
 
-    //createClusters
     clusterMap.forEach(value => {
         let first = value[0];
-        let geoJson = [];
-        let hasPolyGone = false;
-        let hasLineString = false;
+        let geoJSON = [];
 
-        for (let i = 0; i < value.length && (!hasPolyGone || !hasLineString); i++) {
-            if("Polygon" === value[i].getGeoJson().type){
-                hasPolyGone = true;
-            }else if("LineString" === value[i].getGeoJson().type){
-                hasLineString = true;
-            }
-        }
-
-        if(hasPolyGone && hasLineString){
-            value.forEach(value => {
-                let geo  = value.getGeoJson();
-                if("Polygon" === geo.type){
-                    value.setGeoJson(turf.polygonToLine(geo).geometry);
-                }
-            })
-        }
-
-        value.forEach(value => {
-            geoJson.push(value.getGeoJson());
+        value.forEach(res => {
+           geoJSON.push(res.getGeoJson());
         });
 
-        let features = [];
-        geoJson.forEach(res => {
-            features.push(
-                {
-                    type: 'Feature',
-                    geometry: res
-                }
-            )
-        });
+        geoJSON = turf.geometryCollection(geoJSON);
 
-        if(geoJson.length > 1){
-            if(first.getGeoJson().type === "Polygon"){
-                geoJson = turf.union(...features).geometry;
-            }else{
-                let coordinates = turf.getCoords(geoJson);
-
-                geoJson = turf.multiLineString(coordinates).geometry;
-            }
-        }else{
-            geoJson = first.getGeoJson();
-        }
-
-        clusters.push(new ClusterObject(first.getNaam(), first.getType(), geoJson, value, first.getColor(), first.getObjectClass()));
+        clusters.push(new ClusterObject(first.getNaam(), first.getType(), value, first.getColor(), first.getObjectClass()));
     });
 
     return clusters.concat(res);
@@ -523,7 +442,7 @@ export function processSearchScreenResults(res, latestString) {
         returnObject.push(resultaatObj);
     });
 
-    return clusterObjects(returnObject);
+    return returnObject;
 }
 
 export function processGetAllAttributes(res, clickedRes) {

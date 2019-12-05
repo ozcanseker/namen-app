@@ -1,5 +1,6 @@
 import * as PreProcessor from "../ProcessorMethods";
 import {processGetAllAttributes, processSearchScreenResults} from "../ProcessorMethods";
+import {clusterObjects} from "../ProcessorMethods";
 
 /**
  * Dit is het laatst ingetype string. zorgt ervoor dat je niet vorige resultaten rendert
@@ -59,7 +60,8 @@ export async function getMatch(text) {
     result = await makeSearchScreenResults(JSON.parse(result));
 
     //voeg de arrays samen.
-    return mergeResults(exactMatch, result);
+    let res = mergeResults(exactMatch, result);
+    return clusterObjects(res);
 }
 
 /**

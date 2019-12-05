@@ -1,7 +1,7 @@
 import Observable from "./Observable";
 
 class ClusterObject extends Observable{
-    constructor(naam, type, geoJson ,values, color, objectClass){
+    constructor(naam, type ,values, color, objectClass){
         super();
 
         this._naam = naam;
@@ -9,7 +9,6 @@ class ClusterObject extends Observable{
         this._values = values;
         this._color = color;
         this._objectClass = objectClass;
-        this._geoJson = geoJson;
 
         this._onHoverDef = undefined;
         this._onHoverOffDef = undefined;
@@ -39,10 +38,6 @@ class ClusterObject extends Observable{
         return this._values;
     }
 
-    getGeoJson(){
-        return this._geoJson;
-    }
-
     _setOnHover(func){
         this._onHoverDef = func;
     }
@@ -64,11 +59,13 @@ class ClusterObject extends Observable{
     }
 
     getAsFeature(){
-        return  {
-            type: "Feature",
-            properties: this,
-            geometry: this._geoJson
-        }
+        let features = [];
+
+        this._values.forEach(res => {
+            features.push(res.getAsFeature());
+        });
+
+        return features;
     }
 }
 

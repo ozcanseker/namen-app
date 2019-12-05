@@ -2,36 +2,57 @@
  * Houdt resultaat bij. Update de app als er iets verandert.
  */
 import Observable from "./Observable";
-import {isShownClickedResults, sortByObjectClass} from "../network/ProcessorMethods";
+import {clusterObjects, isShownClickedResults, sortByObjectClass} from "../network/ProcessorMethods";
+import Resultaat from "./Resultaat";
+import ClusterObject from "./ClusterObject";
 
-class ResultatenHouder extends Observable{
-    constructor(){
+class ResultatenHouder extends Observable {
+    constructor() {
         super();
 
         this._results = [];
         this._rightClickedResults = [];
         this._clickedResult = undefined;
+        this._clickedCluster = undefined;
+    }
+
+    setClickedCluster(clickedCluster){
+        if(this._clickedCluster){
+            this._clickedCluster.unsubscribe(this);
+        }
+
+        this._clickedCluster = clickedCluster;
+        this._clickedCluster.subscribe(this);
+    }
+
+    getClickedCluster(){
+        return this._clickedCluster;
+    }
+
+    clearClickedCluster(){
+        this._clickedCluster = undefined;
+        this.updateSubscribers();
     }
 
     /**
      * Zet een clickedresultaat en subscribe aan deze
      * @param clicked
      */
-    setClickedResult(clicked){
+    setClickedResult(clicked) {
         this._clickedResult = clicked;
         this._clickedResult.subscribe(this);
         this.updateSubscribers();
     }
 
-    getClickedResult(){
+    getClickedResult() {
         return this._clickedResult;
     }
 
     /**
      * undefine de clicked resultaat en unsubscribe
      */
-    clearClickedResult(){
-        if(this._clickedResult){
+    clearClickedResult() {
+        if (this._clickedResult) {
             this._clickedResult.unsubscribe(this);
             this._clickedResult = undefined;
             this.updateSubscribers();
@@ -41,8 +62,8 @@ class ResultatenHouder extends Observable{
     /**
      * Clear alle resultaten en unsubscribe van all deze
      */
-    clearAll(){
-        if(this._clickedResult){
+    clearAll() {
+        if (this._clickedResult) {
             this._clickedResult.unsubscribe(this);
             this._clickedResult = undefined;
         }
@@ -66,7 +87,7 @@ class ResultatenHouder extends Observable{
      * Zet results en subscribe aan al deze
      * @param results
      */
-    setResults(results){
+    setResults(results) {
         this._results.forEach(res => {
             res.unsubscribe(this);
         });
@@ -79,15 +100,15 @@ class ResultatenHouder extends Observable{
         this.updateSubscribers();
     }
 
-    getResults(){
+    getResults() {
         return this._results;
     }
 
     /**
      * Clear de resultaten
      */
-    clearResults(){
-        if(this._results.length > 0){
+    clearResults() {
+        if (this._results.length > 0) {
             this._results.forEach(res => {
                 res.unsubscribe(this);
             });
@@ -102,7 +123,7 @@ class ResultatenHouder extends Observable{
      * Zet results en subscribe aan al deze
      * @param results
      */
-    setDoubleResults(results){
+    setDoubleResults(results) {
         this._rightClickedResults.forEach(res => {
             res.unsubscribe(this);
         });
@@ -116,15 +137,15 @@ class ResultatenHouder extends Observable{
         this.updateSubscribers();
     }
 
-    getRightClickedRes(){
+    getRightClickedRes() {
         return this._rightClickedResults;
     }
 
     /**
      * Clear de resultaten
      */
-    clearDoubleResults(){
-        if(this._rightClickedResults.length > 0){
+    clearDoubleResults() {
+        if (this._rightClickedResults.length > 0) {
             this._rightClickedResults.forEach(res => {
                 res.unsubscribe(this);
             });
@@ -135,7 +156,7 @@ class ResultatenHouder extends Observable{
         }
     }
 
-    update(){
+    update() {
         this.updateSubscribers();
     }
 
@@ -143,11 +164,13 @@ class ResultatenHouder extends Observable{
      * Krijg alle resultaten behalve clicked resultaat als feature terug.
      * @returns {[Feature]}
      */
-    getSearchedAllObjectsAsFeature(){
+    getSearchedAllObjectsAsFeature() {
         let geojson = [];
 
         this._results.forEach(res => {
-            if(res.getGeoJson()) {
+            if (res instanceof ClusterObject) {
+                geojson = geojson.concat(res.getAsFeature());
+            } else if (res.getGeoJson()) {
                 geojson.push(res.getAsFeature());
             }
         });
@@ -157,11 +180,13 @@ class ResultatenHouder extends Observable{
         return geojson;
     }
 
-    getClickedAllObjectsAsFeature(){
+    getClickedAllObjectsAsFeature() {
         let geojson = [];
 
         this._rightClickedResults.forEach(res => {
-            if(res.getGeoJson() && isShownClickedResults(res)) {
+            if (res instanceof ClusterObject) {
+                geojson = geojson.concat(res.getAsFeature());
+            }else if (res.getGeoJson() && isShownClickedResults(res)) {
                 geojson.push(res.getAsFeature());
             }
         });

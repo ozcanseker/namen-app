@@ -17,6 +17,8 @@ endpoints kiezen.
 
 - zoeken met plus.
 
+- types objecten
+
 - map cluster
 
 - {

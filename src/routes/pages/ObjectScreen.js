@@ -35,7 +35,6 @@ class ObjectScreen extends React.Component {
         let tableNamen;
         let tableRest;
 
-
         if (res) {
             if(res.getNaam()){
                 naam = (<h1>{res.getNaam()}</h1>);
@@ -50,7 +49,6 @@ class ObjectScreen extends React.Component {
                     naam = (<h1>{res.getSluisNaam()}</h1>);
                 }
             }
-
 
             let color;
 

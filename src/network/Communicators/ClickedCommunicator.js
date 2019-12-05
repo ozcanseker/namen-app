@@ -1,8 +1,7 @@
 import Resultaat from "../../model/Resultaat";
 import * as wellKnown from "wellknown";
 import * as PreProcessor from "../ProcessorMethods";
-import {sortByGeoMetryAndName} from "../ProcessorMethods";
-import {clusterObjects} from "../ProcessorMethods";
+import {clusterObjects, sortByGeoMetryAndName} from "../ProcessorMethods";
 
 /**
  * Haalt dingen op aan de hand van de gegeven coordinaten.
@@ -22,18 +21,53 @@ export async function getFromCoordinates(lat, long, top, left, bottom, right) {
         bottom = lat - 0.01500;
     }
 
-    let exactMatch = await queryTriply(queryForCoordinates(top, left, bottom, right));
+    let factor = 0.2;
 
-    if (exactMatch.status > 300) {
+    let stop = lat - ((top-bottom)/2) * factor;
+    let sbottom = lat + ((top-bottom)/2) * factor;
+    let sright = long + ((right-left)/2) * factor;
+    let sleft = long - ((right-left)/2) * factor;
+
+    let nonstreets = await queryTriply(queryForCoordinatesNonStreets(top, left, bottom, right));
+
+    if (nonstreets.status > 300) {
         //bij een network error de string error
         return "error";
     }
 
     //Zet deze om in een array met Resultaat.js
-    exactMatch = await exactMatch.text();
-    exactMatch = await makeSearchScreenResults(JSON.parse(exactMatch));
+    nonstreets = await nonstreets.text();
+    nonstreets = await makeSearchScreenResults(JSON.parse(nonstreets));
 
-    return exactMatch;
+    let streets = await queryTriply(queryForCoordinatesStreets(stop, sleft, sbottom, sright));
+    if (streets.status > 300) {
+        //bij een network error de string error
+        return nonstreets;
+    }
+
+    //Zet deze om in een array met Resultaat.js
+    streets = await streets.text();
+    streets = await makeSearchScreenResults(JSON.parse(streets));
+
+    nonstreets = mergeResults(nonstreets, streets);
+    return clusterObjects(nonstreets);
+}
+
+/**
+ * Voeg resultaten samen
+ * @param exact
+ * @param regex
+ * @returns {any[] | string}
+ */
+function mergeResults(exact, regex) {
+    exact.forEach(resexact => {
+            regex = regex.filter(resregex => {
+                return resexact.getUrl() !== resregex.getUrl();
+            });
+        }
+    );
+
+    return exact.concat(regex);
 }
 
 /**
@@ -144,11 +178,11 @@ async function makeSearchScreenResults(results) {
         returnObject.push(resultaatObj);
     });
 
-    return clusterObjects(returnObject);
+    return returnObject;
 }
 
 async function queryTriply(query) {
-    let result = await fetch("https://api.labs.kadaster.nl/datasets/kadaster/brt/services/brt/sparql", {
+    return await fetch("https://api.labs.kadaster.nl/datasets/kadaster/brt/services/brt/sparql", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/sparql-query',
@@ -156,8 +190,6 @@ async function queryTriply(query) {
         },
         body: query
     });
-
-    return result;
 }
 
 function queryBetterForType(values) {
@@ -185,7 +217,7 @@ function queryBetterForType(values) {
 `
 }
 
-function queryForCoordinates(top, left, bottom, righ) {
+function queryForCoordinatesNonStreets(top, left, bottom, righ) {
     return `PREFIX geo: <http://www.opengis.net/ont/geosparql#>
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
 
@@ -205,7 +237,40 @@ function queryForCoordinates(top, left, bottom, righ) {
               }
                 BIND(bif:st_geomfromtext("POLYGON ((${left} ${bottom}, ${left} ${top}, ${righ} ${top}, ${righ} ${bottom}))") as ?yShape).
                 filter(bif:st_intersects(?xShape, ?yShape))
+                filter not exists{
+                    ?sub a brt:Wegdeel
+                }
             }
-            limit 200
+            limit 150
+            `
+}
+
+function queryForCoordinatesStreets(top, left, bottom, righ) {
+    return `PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+            PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
+
+            select distinct ?sub{
+            {
+                ?sub brt:naam ?label;
+                 geo:hasGeometry/geo:asWKT ?xShape;
+                     a brt:Wegdeel.
+              } UNION {
+                ?sub brt:naamNL ?label;
+                     geo:hasGeometry/geo:asWKT ?xShape;
+                     a brt:Wegdeel.
+              }UNION {
+                ?sub brt:naamFries ?label;
+                     geo:hasGeometry/geo:asWKT ?xShape;
+                     a brt:Wegdeel.
+              }UNION {
+                ?sub brt:naamOfficieel ?label;
+                     geo:hasGeometry/geo:asWKT ?xShape;
+                     a brt:Wegdeel.
+              }
+                BIND(bif:st_geomfromtext("POLYGON ((${left} ${bottom}, ${left} ${top}, ${righ} ${top}, ${righ} ${bottom}))") as ?yShape).
+                filter(bif:st_intersects(?xShape, ?yShape))
+                
+            }
+            limit 100
             `
 }

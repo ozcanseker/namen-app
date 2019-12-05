@@ -1,6 +1,7 @@
 import * as PreProcessor from "../ProcessorMethods";
 import {processSearchScreenResults} from "../ProcessorMethods";
 import {processGetAllAttributes} from "../ProcessorMethods";
+import {clusterObjects} from "../ProcessorMethods";
 
 /**
  * Dit is het laatst ingetype string. zorgt ervoor dat je niet vorige resultaten rendert
@@ -57,7 +58,8 @@ export async function getMatch(text) {
     result = await makeSearchScreenResults(JSON.parse(result));
 
     //voeg de arrays samen.
-    return mergeResults(exactMatch, result);
+    let res = mergeResults(exactMatch, result);
+    return clusterObjects(res);
 }
 
 /**
@@ -144,7 +146,7 @@ function nameQueryExactMatch(query) {
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
             
             SELECT distinct * WHERE {
-              {?sub brt:naamNL "${query}".} union {?sub brt:naam "${query}".} union {?sub brt:naamFries "${query}".} UNION {?sub brt:brugnaam "|${query}|"}  UNION {?sub brt:tunnelnaam "|${query}|"} UNION {?sub brt:sluisnaam "|${query}|"} UNION {?sub brt:knooppuntnaam "|${query}|"} UNION {?sub brt:naamOfficieel  "|${query}|"}.
+              {?sub brt:naamNL "${query}"@nl.} union {?sub brt:naam "${query}"@nl.} union {?sub brt:naamFries "${query}"@fy.} UNION {?sub brt:brugnaam "${query}"@nl}  UNION {?sub brt:tunnelnaam "${query}"@nl} UNION {?sub brt:sluisnaam "${query}"@nl} UNION {?sub brt:knooppuntnaam "${query}"@nl} UNION {?sub brt:naamOfficieel  "${query}"@nl} UNION {?sub brt:naamOfficieel "${query}"@fy}
             }
             LIMIT 990
 `
@@ -175,7 +177,7 @@ function queryBetterForType(values) {
         VALUES ?s {
            ${values}
         }
-        ?s a ?type
+        ?s a ?type.
         
   Optional{?s brt:naam ?naam.}.
   Optional{?s brt:naamNL ?naamNl.}.

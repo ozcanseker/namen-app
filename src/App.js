@@ -34,6 +34,7 @@ import ResultatenHouder from './model/ResultatenHouder';
 import ClickedResultaat from "./model/ClickedResultaat";
 import {DefaultIcon, Icons} from "./components/Icons";
 import ContextMenu from "./components/ContextMenu";
+import ClusterObject from "./model/ClusterObject";
 
 class App extends React.Component {
     constructor(props) {
@@ -406,29 +407,33 @@ class App extends React.Component {
      * Wanneer iemand op een resultaat klikt vor dan deze methode uit.
      **/
     onClickItem = (res) => {
-        //maak een nieuwe clickedresultaat
-        let clickedRes = new ClickedResultaat(res);
+        if(res instanceof ClusterObject){
+            console.log(res);
+        }else{
+            //maak een nieuwe clickedresultaat
+            let clickedRes = new ClickedResultaat(res);
 
-        this.setState({
-            clickedOnLayeredMap: undefined
-        });
+            this.setState({
+                clickedOnLayeredMap: undefined
+            });
 
-        //zet de resultatenhouder de clickedresultaat.
-        this.state.results.setClickedResult(clickedRes);
+            //zet de resultatenhouder de clickedresultaat.
+            this.state.results.setClickedResult(clickedRes);
 
-        //krijg de center van de plek waar je naartoe wilt.
-        let center = this.getCenterGeoJson(res.getGeoJson());
-        let zoom = this.map.getZoom();
+            //krijg de center van de plek waar je naartoe wilt.
+            let center = this.getCenterGeoJson(res.getGeoJson());
+            let zoom = this.map.getZoom();
 
-        //als de gebruiker ingezoomt is, zoom dan niet uit.
-        if (zoom < 10) {
-            zoom = 10;
+            //als de gebruiker ingezoomt is, zoom dan niet uit.
+            if (zoom < 10) {
+                zoom = 10;
+            }
+
+            //zet de view.
+            this.map.setView(center, zoom);
+
+            this.props.history.push(`/result/${res.getNaam()}`);
         }
-
-        //zet de view.
-        this.map.setView(center, zoom);
-
-        this.props.history.push(`/result/${res.getNaam()}`);
     };
 
     /**
@@ -662,7 +667,7 @@ class App extends React.Component {
         }
 
         return aantalZoekResultaten;
-    }
+    };
 
     render() {
         let aantalZoekResultaten = this.getZoekResultatenAantal();
