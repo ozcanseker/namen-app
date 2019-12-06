@@ -131,7 +131,7 @@ function mergeResults(exact, regex) {
     return exact.concat(regex);
 }
 
-async function queryTriply(query) {
+export async function queryTriply(query) {
     return await fetch("https://api.labs.kadaster.nl/datasets/kadaster/brt/services/brt/sparql", {
         method: 'POST',
         headers: {
@@ -169,7 +169,7 @@ function nameQueryForRegexMatch(queryString) {
             `
 }
 
-function queryBetterForType(values) {
+export function queryBetterForType(values) {
     return `
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>

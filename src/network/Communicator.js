@@ -1,6 +1,7 @@
 import * as CommunicatorPDOK from './Communicators/CommunicatorPDOK';
 import * as CommunicatorTRIPLY from './Communicators/CommunicatorTRIPLY';
 import * as ClickedCommunicator from './Communicators/ClickedCommunicator';
+import * as CommunicatorELASTICSEARCH from "./Communicators/CommunicatorELASTICSEARCH";
 
 /**
  * Laatste string waar op is gezocht
@@ -20,9 +21,9 @@ let latestMethod = "";
  */
 export function getOptions(){
     return [
-        //{ value: 'tes', text: 'Kadaster Labs Elasticsearch', description : "snelste"},
         { value: 'tsp', text: 'Kadaster Labs SPARQL', description : "snel"},
         { value: 'psp', text: 'PDOK SPARQL', description : "meest actueel"},
+        { value: 'tes', text: 'Kadaster Labs Elasticsearch', description : "snelste"},
     ];
 }
 
@@ -43,7 +44,7 @@ export async function getMatch(text, method) {
     }else if(method === "psp"){
         res = await CommunicatorPDOK.getMatch(text);
     }else {
-        res = await CommunicatorTRIPLY.getMatch(text);
+        res = await CommunicatorELASTICSEARCH.getMatch(text);
     }
 
     if((text === latestString && latestMethod === method) || res === "error"){
