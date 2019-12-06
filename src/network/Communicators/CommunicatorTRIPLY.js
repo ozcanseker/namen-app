@@ -1,7 +1,10 @@
-import * as PreProcessor from "../ProcessorMethods";
-import {processSearchScreenResults} from "../ProcessorMethods";
-import {processGetAllAttributes} from "../ProcessorMethods";
-import {clusterObjects} from "../ProcessorMethods";
+import {
+    processSearchScreenResults,
+    processGetAllAttributes,
+    clusterObjects,
+    bringExactNameToFront,
+    firstLetterCapital
+} from "../ProcessorMethods";
 
 /**
  * Dit is het laatst ingetype string. zorgt ervoor dat je niet vorige resultaten rendert
@@ -26,7 +29,7 @@ export async function getMatch(text) {
     latestString = text;
 
     //doe hierna 2 queries. Eentje voor exacte match
-    let exactMatch = await queryTriply(nameQueryExactMatch(PreProcessor.firstLetterCapital(text)));
+    let exactMatch = await queryTriply(nameQueryExactMatch(firstLetterCapital(text)));
 
     //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
     if (latestString !== text) {
@@ -41,7 +44,7 @@ export async function getMatch(text) {
     exactMatch = await makeSearchScreenResults(JSON.parse(exactMatch));
 
     if (isExactMatch) {
-        return exactMatch;
+        return clusterObjects(exactMatch);
     }
 
     //Doe hierna nog een query voor dingen die op de ingetypte string lijken.
@@ -59,7 +62,7 @@ export async function getMatch(text) {
 
     //voeg de arrays samen.
     let res = mergeResults(exactMatch, result);
-    return clusterObjects(res);
+    return bringExactNameToFront(text, clusterObjects(res));
 }
 
 /**

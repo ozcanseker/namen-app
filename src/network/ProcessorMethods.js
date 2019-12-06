@@ -12,7 +12,6 @@ import * as wellKnown from "wellknown";
 import Resultaat from "../model/Resultaat";
 import * as turf from "@turf/turf";
 import ClusterObject from "../model/ClusterObject";
-import {geoJson} from "leaflet/dist/leaflet-src.esm";
 
 /**
  * Een file die alle classen van de brt bevat. Object klassen staan achter aan.
@@ -288,11 +287,11 @@ export function sortByGeoMetryAndName(values, searchString) {
 }
 
 export function clusterObjects(res) {
-    return res;
+    // return res;
     let map = new Map();
 
     for (let i = res.length - 1; i >= 0; i--) {
-        let naam = res[i].getNaam();
+        let naam = res[i].getType() === "Waterloop" ? res[i].getNaam() + res[i].getType() : res[i].getNaam() + res[i].getObjectClass();
 
         if (res[i].getType() === "Waterloop" || res[i].getObjectClass() === "Wegdeel") {
             if (map.has(naam)) {
@@ -337,15 +336,44 @@ export function clusterObjects(res) {
         let geoJSON = [];
 
         value.forEach(res => {
-           geoJSON.push(res.getGeoJson());
+            let geo;
+
+            if(res.getGeoJson().type !== "Polygon"){
+                geo = turf.buffer(res.getGeoJson(), 0.0001).geometry;
+            }else{
+                geo = res.getGeoJson();
+            }
+
+            geoJSON.push({
+                    type: 'Feature',
+                    geometry: geo
+                }
+            )
         });
 
-        geoJSON = turf.geometryCollection(geoJSON);
+        geoJSON = turf.union(...geoJSON).geometry;
 
-        clusters.push(new ClusterObject(first.getNaam(), first.getType(), value, first.getColor(), first.getObjectClass()));
+        clusters.push(new ClusterObject(first.getNaam(), first.getType(), geoJSON, value, first.getColor(), first.getObjectClass()));
     });
 
     return clusters.concat(res);
+}
+
+export function bringExactNameToFront(string, res){
+    let j = 0;
+    string = string.toUpperCase();
+
+    for (let i = 0; i < res.length; i++) {
+        if(string === res[i].getNaam().toUpperCase()){
+            let x = res[j];
+            res[j] = res[i];
+            res[i] = x;
+
+            j++;
+        }
+    }
+
+    return res;
 }
 
 /**

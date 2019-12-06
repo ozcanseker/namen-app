@@ -44,6 +44,11 @@ class ContextMenu extends React.Component {
         }
     }
 
+    onClick = (resOnClick) => {
+        resOnClick();
+        this.props.resetCoordinates();
+    };
+
     render() {
         let myStyle;
 
@@ -80,7 +85,9 @@ class ContextMenu extends React.Component {
 
         //voor elk element crëer een optie
         let elements = this.props.objectsOverLayedOnMap.map(res => {
-            return (<p key={res.head + res.sub + res.subColor} onClick={res.onClick}>
+            return (<p key={res.head + res.sub + res.subColor} onClick={() => {
+                this.onClick(res.onClick);
+            }}>
                 <b>{res.head} </b>
                 <span
                     style={{color: this.props.getHexFromColor(res.subColor, true)}}>{res.sub}</span>

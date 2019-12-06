@@ -1,11 +1,12 @@
 import Observable from "./Observable";
 
 class ClusterObject extends Observable{
-    constructor(naam, type ,values, color, objectClass){
+    constructor(naam, type,geoJSON ,values, color, objectClass){
         super();
 
         this._naam = naam;
         this._type = type;
+        this._geoJson = geoJSON;
         this._values = values;
         this._color = color;
         this._objectClass = objectClass;
@@ -58,14 +59,19 @@ class ClusterObject extends Observable{
         }
     }
 
+    getValuesAsFeatures() {
+        return this._values.map(res => {
+            return res.getAsFeature();
+        })
+    }
+
+
     getAsFeature(){
-        let features = [];
-
-        this._values.forEach(res => {
-            features.push(res.getAsFeature());
-        });
-
-        return features;
+        return  {
+            type: "Feature",
+            properties: this,
+            geometry: this._geoJson
+        }
     }
 }
 

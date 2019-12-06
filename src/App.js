@@ -268,6 +268,8 @@ class App extends React.Component {
 
         if (this.state.results.getClickedResult()) {
             res = [this.state.results.getClickedResult().getAsFeature()];
+        } else if (this.state.results.getClickedCluster()) {
+            res = this.state.results.getClickedCluster().getValuesAsFeatures();
         } else if (this.state.results.getRightClickedRes().length > 0) {
             res = this.state.results.getClickedAllObjectsAsFeature();
         } else {
@@ -292,10 +294,10 @@ class App extends React.Component {
         //de punt wordt al afgehandeld door addMarker
         if (feature.geometry.type !== 'Point') {
             //vindt eerst de center
-            var latLong = this.getCenterGeoJson(feature);
+            let latLong = this.getCenterGeoJson(feature);
 
-                //op deze center voeg een marker toe
-                this.addMarker(feature, latLong);
+            //op deze center voeg een marker toe
+            this.addMarker(feature, latLong);
 
             //laat de pop up zien als je erover gaat
             layer.on('mouseover', (e) => {
@@ -407,9 +409,10 @@ class App extends React.Component {
      * Wanneer iemand op een resultaat klikt vor dan deze methode uit.
      **/
     onClickItem = (res) => {
-        if(res instanceof ClusterObject){
-            console.log(res);
-        }else{
+        if (res instanceof ClusterObject) {
+            this.state.results.setClickedCluster(res);
+            this.props.history.push(`/result/${res.getNaam()}`);
+        } else {
             //maak een nieuwe clickedresultaat
             let clickedRes = new ClickedResultaat(res);
 
@@ -432,7 +435,18 @@ class App extends React.Component {
             //zet de view.
             this.map.setView(center, zoom);
 
-            this.props.history.push(`/result/${res.getNaam()}`);
+
+            let match = matchPath(this.props.location.pathname, {
+                path: "/result/:id",
+                exact: true,
+                strict: true
+            });
+
+            if (match) {
+                this.props.history.push(`/result/${res.getNaam()}/${res.getNaam()}`);
+            } else {
+                this.props.history.push(`/result/${res.getNaam()}`);
+            }
         }
     };
 
@@ -441,19 +455,43 @@ class App extends React.Component {
      **/
     getCenterGeoJson = (geojson) => {
         //kijk eerst naar de center
-        var centroid = turf.center(geojson);
+        let centroid = turf.center(geojson);
 
-        try {
+        let geoJsonFeature = geojson.geometry ? geojson : {type: 'Feature', geometry: geojson};
+        geojson = geojson.geometry ? geojson.geometry :  geojson;
+
+        if(geojson.type !== "MultiPolygon") {
             //als deze niet in het geojson object ligt, gebruik dan de centroid
-            if (!turf.booleanContains(geojson, centroid)) {
+            if (!turf.booleanContains(geoJsonFeature, centroid)) {
+                centroid = turf.centroid(geoJsonFeature);
+            }
+
+            if(!turf.booleanContains(geojson, centroid)){
+                centroid = turf.pointOnFeature(geojson);
+            }
+        }else{
+            let lon = centroid.geometry.coordinates[0];
+            let lat = centroid.geometry.coordinates[1];
+            let col = {type: "FeatureCollection", features: [geoJsonFeature]};
+            let isInside = inside.feature(col, [lon, lat]) !== -1;
+
+            if (!isInside) {
                 centroid = turf.centroid(geojson);
             }
-        } catch (e) {
+
+            lon = centroid.geometry.coordinates[0];
+            lat = centroid.geometry.coordinates[1];
+            col = {type: "FeatureCollection", features: [geoJsonFeature]};
+            isInside = inside.feature(col, [lon, lat]) !== -1;
+
+            if(!isInside){
+                centroid = turf.pointOnFeature(geojson);
+            }
         }
 
         //krijg de lat en long
-        var lon = centroid.geometry.coordinates[0];
-        var lat = centroid.geometry.coordinates[1];
+        let lon = centroid.geometry.coordinates[0];
+        let lat = centroid.geometry.coordinates[1];
 
         return [lat, lon];
     };
@@ -479,6 +517,7 @@ class App extends React.Component {
             //haal vorige resultaten weg
             this.state.results.clearClickedResult();
             this.state.results.clearDoubleResults();
+            this.state.results.clearClickedCluster();
 
             //debounce zodat het pas wordt uitgevoerd wanneer de gebuiker stopt met typen.
             if (!this.debounceDoSearch) {
@@ -506,9 +545,18 @@ class App extends React.Component {
             //verwijder alle resultaten
             this.state.results.clearAll();
 
+            let match2 = matchPath(this.props.location.pathname, {
+                path: "/result/:id/:idd",
+                exact: true,
+                strict: true
+            });
+
+
             //ga terug naar het hoofdscherm
             if (this.props.location.pathname === "/result") {
                 this.props.history.goBack();
+            } else if (match2) {
+                this.props.history.go(-3);
             } else if (this.props.location.pathname !== '/') {
                 this.props.history.go(-2);
             }
@@ -566,10 +614,27 @@ class App extends React.Component {
             strict: true
         });
 
+        let match2 = matchPath(this.props.location.pathname, {
+            path: "/result/:id/:idd",
+            exact: true,
+            strict: true
+        });
+
         if (this.props.location.pathname === "/result") {
             //Als je op de result screen bent ga dan terug naar het hoofdscherm
-            this.handleDeleteClick();
+            if (this.state.results.getClickedCluster()) {
+                this.state.results.clearClickedCluster();
+            } else {
+                this.handleDeleteClick();
+            }
         } else if (match) {
+            //ga eerst een pagina terug
+            this.props.history.goBack();
+
+            //Als je op een geklikte resultaat scherm bent ga dan terug naar de result scherm
+            this.state.results.clearClickedResult();
+            this.state.results.clearClickedCluster();
+        } else if (match2) {
             //ga eerst een pagina terug
             this.props.history.goBack();
 
@@ -621,12 +686,17 @@ class App extends React.Component {
         let results = this.state.results;
 
         //haal eerst alle marker weg
+        this.map.closePopup();
+        this.popup = undefined;
         this.markerGroup.clearLayers();
         this.geoJsonLayer.clearLayers();
 
         //als er een geklikt resultaat is, render dan alleen deze
         if (this.state.results.getClickedResult()) {
             let feature = this.state.results.getClickedResult().getAsFeature();
+            this.geoJsonLayer.addData(feature);
+        } else if (this.state.results.getClickedCluster()) {
+            let feature = this.state.results.getClickedCluster().getValuesAsFeatures();
             this.geoJsonLayer.addData(feature);
         } else if (this.state.results.getRightClickedRes().length > 0) {
             let geoJsonResults = results.getClickedAllObjectsAsFeature();
@@ -644,8 +714,26 @@ class App extends React.Component {
      * Wordt aangeroepen wanneer iemand op de zoekbalk klikt.
      */
     onFocus = () => {
+        let match2 = matchPath(this.props.location.pathname, {
+            path: "/result/:id/:idd",
+            exact: true,
+            strict: true
+        });
+
+        let match = matchPath(this.props.location.pathname, {
+            path: "/result/:id",
+            exact: true,
+            strict: true
+        });
+
         if (this.state.results.getRightClickedRes().length > 0) {
             this.handleDeleteClick();
+        } else if (match2) {
+            this.state.results.clearClickedResult();
+            this.state.results.clearClickedCluster();
+            this.props.history.go(-2);
+        } else if (match && this.state.results.getClickedCluster()) {
+            this.handleOnBackButtonClick();
         } else if (this.state.results.getClickedResult()) {
             this.handleOnBackButtonClick();
         }
@@ -656,13 +744,15 @@ class App extends React.Component {
 
         if (this.state.results.getClickedResult()) {
 
+        } else if (this.state.results.getClickedCluster()) {
+            aantalZoekResultaten = this.state.results.getClickedCluster().getValues().length;
         } else if (this.state.results.getRightClickedRes().length > 0) {
             aantalZoekResultaten = this.state.results.getRightClickedRes().length;
         } else {
             aantalZoekResultaten = this.state.results.getResults().length;
         }
 
-        if(aantalZoekResultaten > 989){
+        if (aantalZoekResultaten > 989) {
             aantalZoekResultaten = 900 + "+";
         }
 
@@ -738,7 +828,7 @@ class App extends React.Component {
                         <NavBar
                             loading={this.state.isFetching}
                             onBack={this.handleOnBackButtonClick}
-                            aantalZoekResultaten = {aantalZoekResultaten}
+                            aantalZoekResultaten={aantalZoekResultaten}
                         />
                         <div className="loaderDiv">
                             <Loader

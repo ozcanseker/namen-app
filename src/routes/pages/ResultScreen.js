@@ -3,11 +3,17 @@ import Resultaat from "../../model/Resultaat";
 
 class ResultScreen extends React.Component {
     render() {
-        let results = this.props.res.getRightClickedRes().length > 0 ? this.props.res.getRightClickedRes() : this.props.res.getResults();
+        let results;
+
+        if(this.props.res.getClickedCluster()){
+            results = this.props.res.getClickedCluster().getValues();
+        }else{
+            results = this.props.res.getRightClickedRes().length > 0 ? this.props.res.getRightClickedRes() : this.props.res.getResults();
+        }
 
         let elements = results.map(res => {
-            let pElementHoofd = (<p className= "hoofdText">&nbsp;</p>)
-            let pElementSub = (<p className= "subText">&nbsp;</p>)
+            let pElementHoofd = (<p className= "hoofdText">&nbsp;</p>);
+            let pElementSub = (<p className= "subText">&nbsp;</p>);
 
             if(res.getNaam()){
                 pElementHoofd = (<p className= "hoofdText">{res.getNaam()}</p>);

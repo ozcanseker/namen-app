@@ -2,8 +2,7 @@
  * Houdt resultaat bij. Update de app als er iets verandert.
  */
 import Observable from "./Observable";
-import {clusterObjects, isShownClickedResults, sortByObjectClass} from "../network/ProcessorMethods";
-import Resultaat from "./Resultaat";
+import {isShownClickedResults, sortByObjectClass} from "../network/ProcessorMethods";
 import ClusterObject from "./ClusterObject";
 
 class ResultatenHouder extends Observable {
@@ -23,6 +22,7 @@ class ResultatenHouder extends Observable {
 
         this._clickedCluster = clickedCluster;
         this._clickedCluster.subscribe(this);
+        this.updateSubscribers();
     }
 
     getClickedCluster(){
@@ -30,6 +30,10 @@ class ResultatenHouder extends Observable {
     }
 
     clearClickedCluster(){
+        if(this._clickedCluster){
+            this._clickedCluster.unsubscribe(this);
+        }
+
         this._clickedCluster = undefined;
         this.updateSubscribers();
     }
@@ -79,6 +83,13 @@ class ResultatenHouder extends Observable {
         });
 
         this._rightClickedResults = [];
+
+
+        if(this._clickedCluster){
+            this._clickedCluster.unsubscribe(this);
+        }
+
+        this._clickedCluster = undefined;
 
         this.updateSubscribers();
     }

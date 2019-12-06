@@ -21,7 +21,7 @@ export async function getFromCoordinates(lat, long, top, left, bottom, right) {
         bottom = lat - 0.01500;
     }
 
-    let factor = 0.2;
+    let factor = 0.33;
 
     let stop = lat - ((top-bottom)/2) * factor;
     let sbottom = lat + ((top-bottom)/2) * factor;
@@ -42,14 +42,14 @@ export async function getFromCoordinates(lat, long, top, left, bottom, right) {
     let streets = await queryTriply(queryForCoordinatesStreets(stop, sleft, sbottom, sright));
     if (streets.status > 300) {
         //bij een network error de string error
-        return nonstreets;
+        return clusterObjects(nonstreets);
     }
 
     //Zet deze om in een array met Resultaat.js
     streets = await streets.text();
     streets = await makeSearchScreenResults(JSON.parse(streets));
 
-    nonstreets = mergeResults(nonstreets, streets);
+    nonstreets = mergeResults(streets, nonstreets);
     return clusterObjects(nonstreets);
 }
 
@@ -241,7 +241,7 @@ function queryForCoordinatesNonStreets(top, left, bottom, righ) {
                     ?sub a brt:Wegdeel
                 }
             }
-            limit 150
+            limit 300
             `
 }
 
@@ -271,6 +271,6 @@ function queryForCoordinatesStreets(top, left, bottom, righ) {
                 filter(bif:st_intersects(?xShape, ?yShape))
                 
             }
-            limit 100
+            limit 150
             `
 }
