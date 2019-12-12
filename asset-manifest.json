@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/namen-app/static/css/main.5cda5b1d.chunk.css",
-    "main.js": "/namen-app/static/js/main.8b49d907.chunk.js",
-    "main.js.map": "/namen-app/static/js/main.8b49d907.chunk.js.map",
+    "main.js": "/namen-app/static/js/main.8c6f8b01.chunk.js",
+    "main.js.map": "/namen-app/static/js/main.8c6f8b01.chunk.js.map",
     "runtime-main.js": "/namen-app/static/js/runtime-main.bf28738d.js",
     "runtime-main.js.map": "/namen-app/static/js/runtime-main.bf28738d.js.map",
     "static/js/2.7116da51.chunk.js": "/namen-app/static/js/2.7116da51.chunk.js",
     "static/js/2.7116da51.chunk.js.map": "/namen-app/static/js/2.7116da51.chunk.js.map",
     "index.html": "/namen-app/index.html",
-    "precache-manifest.4b9599621c18de6dff880160f89bae7d.js": "/namen-app/precache-manifest.4b9599621c18de6dff880160f89bae7d.js",
+    "precache-manifest.f96082a2b030be496acf117cafa42c3b.js": "/namen-app/precache-manifest.f96082a2b030be496acf117cafa42c3b.js",
     "service-worker.js": "/namen-app/service-worker.js",
     "static/css/main.5cda5b1d.chunk.css.map": "/namen-app/static/css/main.5cda5b1d.chunk.css.map",
     "static/media/Logo-kadaster.png": "/namen-app/static/media/Logo-kadaster.5d975e1b.png"
@@ -17,6 +17,6 @@
     "static/js/runtime-main.bf28738d.js",
     "static/js/2.7116da51.chunk.js",
     "static/css/main.5cda5b1d.chunk.css",
-    "static/js/main.8b49d907.chunk.js"
+    "static/js/main.8c6f8b01.chunk.js"
   ]
 }
