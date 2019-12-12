@@ -1,6 +1,6 @@
 import {
-    processGetAllAttributes,
     processSearchScreenResults,
+    processGetAllAttributes,
     clusterObjects,
     bringExactNameToFront,
     firstLetterCapital
@@ -21,8 +21,7 @@ let latestString = "";
  * @returns {Promise<string|undefined>} Undefined wanneer de fetch request veroudert is en een array met Resultaat.js als
  * de query nog niet veroudert is, Kan ook de string "error" terug krijgen. Dit is wanneer er een netwerk error is.
  */
-export async function getMatch(text) {
-    //als exact match
+export async function getMatch(text, url) {
     let isExactMatch = text.match(/".*"/);
     text = text.replace(/"/g, "");
 
@@ -30,7 +29,7 @@ export async function getMatch(text) {
     latestString = text;
 
     //doe hierna 2 queries. Eentje voor exacte match
-    let exactMatch = await queryPDOK(nameQueryExactMatchPDOK(firstLetterCapital(text)));
+    let exactMatch = await queryTriply(nameQueryExactMatch(firstLetterCapital(text)), url);
 
     //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
     if (latestString !== text) {
@@ -42,14 +41,14 @@ export async function getMatch(text) {
 
     //zet deze om in een array met Resultaat.js
     exactMatch = await exactMatch.text();
-    exactMatch = await makeSearchScreenResults(JSON.parse(exactMatch));
+    exactMatch = await makeSearchScreenResults(JSON.parse(exactMatch), url);
 
     if (isExactMatch) {
         return clusterObjects(exactMatch);
     }
 
     //Doe hierna nog een query voor dingen die op de ingetypte string lijken.
-    let result = await queryPDOK(nameQueryForRegexMatch(text));
+    let result = await queryTriply(nameQueryForRegexMatch(text), url);
 
     if (latestString !== text) {
         return undefined;
@@ -59,7 +58,7 @@ export async function getMatch(text) {
 
     //zet netwerk res om in een array met Resultaat.js
     result = await result.text();
-    result = await makeSearchScreenResults(JSON.parse(result));
+    result = await makeSearchScreenResults(JSON.parse(result), url);
 
     //voeg de arrays samen.
     let res = mergeResults(exactMatch, result);
@@ -73,15 +72,16 @@ export async function getMatch(text) {
  * Deze moet erin blijven als je het opnieuw wilt implmenteren.
  *
  * @param clickedRes een ClickedResultaat.js object die leeg is.
+ * @param endpointurl
  * @returns {Promise<void>}
  */
-export async function getAllAttribtes(clickedRes) {
+export async function getAllAttribtes(clickedRes, endpointurl) {
     /**
-     * Haal alle attributen van deze url
+     * Haal alle attributen van
      */
     let url = clickedRes.getUrl();
 
-    let res = await queryPDOK(allAttributesFromUrl(url));
+    let res = await queryTriply(allAttributesFromUrl(url), endpointurl);
     res = await res.text();
     res = JSON.parse(res);
 
@@ -91,17 +91,22 @@ export async function getAllAttribtes(clickedRes) {
 /**
  * maakt van een lijst van Result.js objecten uit de sparql query.
  * @param results
+ * @param url
  * @returns {[]}
  */
-async function makeSearchScreenResults(results) {
+async function makeSearchScreenResults(results, url) {
     results = results.results.bindings;
+
+    if(results.length === 0){
+        return [];
+    }
 
     let string = "";
     for (let i = 0; i < results.length; i++) {
         string += `<${results[i].sub.value}>`;
     }
 
-    let res = await queryPDOK(queryBetterForType(string));
+    let res = await queryTriply(queryBetterForType(string), url);
 
     //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
     if (res.status > 300) {
@@ -132,8 +137,8 @@ function mergeResults(exact, regex) {
     return exact.concat(regex);
 }
 
-async function queryPDOK(query) {
-    return await fetch("https://data.pdok.nl/sparql", {
+export async function queryTriply(query, url) {
+    return await fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/sparql-query',
@@ -141,9 +146,10 @@ async function queryPDOK(query) {
         },
         body: query
     });
+
 }
 
-function nameQueryExactMatchPDOK(query) {
+function nameQueryExactMatch(query) {
     return `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
@@ -151,7 +157,7 @@ function nameQueryExactMatchPDOK(query) {
             SELECT distinct * WHERE {
               {?sub brt:naamNL "${query}"@nl.} union {?sub brt:naam "${query}"@nl.} union {?sub brt:naamFries "${query}"@fy.} UNION {?sub brt:brugnaam "${query}"@nl}  UNION {?sub brt:tunnelnaam "${query}"@nl} UNION {?sub brt:sluisnaam "${query}"@nl} UNION {?sub brt:knooppuntnaam "${query}"@nl} UNION {?sub brt:naamOfficieel  "${query}"@nl} UNION {?sub brt:naamOfficieel "${query}"@fy}
             }
-            LIMIT 990
+            LIMIT 1000
 `
 }
 
@@ -165,11 +171,11 @@ function nameQueryForRegexMatch(queryString) {
               
               FILTER(REGEX(?label, "${queryString}", "i")).
             }
-            LIMIT 100
+            LIMIT 1000
             `
 }
 
-function queryBetterForType(values) {
+export function queryBetterForType(values) {
     return `
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -180,7 +186,7 @@ function queryBetterForType(values) {
         VALUES ?s {
            ${values}
         }
-        ?s a ?type
+        ?s a ?type.
         
   Optional{?s brt:naam ?naam.}.
   Optional{?s brt:naamNL ?naamNl.}.
@@ -189,6 +195,7 @@ function queryBetterForType(values) {
   Optional{?s brt:sluisnaam ?sluisnaam.}.
   Optional{?s brt:tunnelnaam ?tunnelnaam}.
   Optional{?s brt:brugnaam ?brugnaam.}.
+  Optional{?s brt:naamOfficieel ?offnaam.}.
   Optional{?s geo:hasGeometry/geo:asWKT ?wktJson}.
   }
 `

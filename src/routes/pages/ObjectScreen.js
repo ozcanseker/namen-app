@@ -94,15 +94,6 @@ class ObjectScreen extends React.Component {
                 )
             }
 
-            if (res.getNaam() && !res.getNaamNl()) {
-                naam2 = (
-                    <tr>
-                        <td><b>Naam:</b></td>
-                        <td>{res.getNaam()}</td>
-                    </tr>
-                )
-            }
-
             if (res.getTunnelNaam()) {
                 tunnelnaam = (
                     <tr>

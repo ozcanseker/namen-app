@@ -201,6 +201,7 @@ export function seperateUpperCase(string) {
             }
         }
     );
+
     return string.join(" ");
 }
 
@@ -404,7 +405,34 @@ export function processSearchScreenResults(res, latestString) {
 
         let fO = valueMap[0];
 
-        if ((fO.brugnaam && fO.brugnaam.value.toUpperCase().includes(latestString.toUpperCase()))
+        if ((fO.brugnaam && fO.brugnaam.value.toUpperCase() === latestString.toUpperCase())
+            || (fO.tunnelnaam && fO.tunnelnaam.value.toUpperCase() === latestString.toUpperCase())
+            || (fO.sluisnaam && fO.sluisnaam.value.toUpperCase() === latestString.toUpperCase())
+            || (fO.knooppuntnaam && fO.knooppuntnaam.value.toUpperCase() === latestString.toUpperCase())) {
+            if (fO.brugnaam) {
+                naam = fO.brugnaam.value;
+            } else if (fO.tunnelnaam) {
+                naam = fO.tunnelnaam.value;
+            } else if (fO.sluisnaam) {
+                naam = fO.sluisnaam.value;
+            } else {
+                naam = fO.knooppuntnaam.value;
+            }
+
+            naam = naam.replace(/\|/g, "");
+        }else if (fO.offnaam && fO.offnaam.value.toUpperCase() === latestString.toUpperCase()) {
+            //kijk of het resultaat niet undefined is. Kijk ook of het gezochte string een deel van de naam bevat.
+            //Dit heb je nodig want bijvoorbeeld bij frieze namen moet de applicatie de frieze naam laten zien.
+            naam = fO.offnaam.value;
+        } else if (fO.naamFries && fO.naamFries.value.toUpperCase() === latestString.toUpperCase()) {
+            //kijk of het resultaat niet undefined is. Kijk ook of het gezochte string een deel van de naam bevat.
+            //Dit heb je nodig want bijvoorbeeld bij frieze namen moet de applicatie de frieze naam laten zien.
+            naam = fO.naamFries.value;
+        } else if (fO.naamNl && fO.naamNl.value.toUpperCase() === latestString.toUpperCase()) {
+            naam = fO.naamNl.value;
+        } else if (fO.naam && fO.naam.value.toUpperCase() === latestString.toUpperCase()) {
+            naam = fO.naam.value;
+        }else if ((fO.brugnaam && fO.brugnaam.value.toUpperCase().includes(latestString.toUpperCase()))
             || (fO.tunnelnaam && fO.tunnelnaam.value.toUpperCase().includes(latestString.toUpperCase()))
             || (fO.sluisnaam && fO.sluisnaam.value.toUpperCase().includes(latestString.toUpperCase()))
             || (fO.knooppuntnaam && fO.knooppuntnaam.value.toUpperCase().includes(latestString.toUpperCase()))
@@ -420,6 +448,10 @@ export function processSearchScreenResults(res, latestString) {
             }
 
             naam = naam.replace(/\|/g, "");
+        }else if (fO.offnaam && fO.offnaam.value.toUpperCase().includes(latestString.toUpperCase())) {
+            //kijk of het resultaat niet undefined is. Kijk ook of het gezochte string een deel van de naam bevat.
+            //Dit heb je nodig want bijvoorbeeld bij frieze namen moet de applicatie de frieze naam laten zien.
+            naam = fO.offnaam.value;
         } else if (fO.naamFries && fO.naamFries.value.toUpperCase().includes(latestString.toUpperCase())) {
             //kijk of het resultaat niet undefined is. Kijk ook of het gezochte string een deel van de naam bevat.
             //Dit heb je nodig want bijvoorbeeld bij frieze namen moet de applicatie de frieze naam laten zien.
@@ -516,10 +548,12 @@ export function processGetAllAttributes(res, clickedRes) {
             types.push((stripUrlToType(value)));
         } else if (key === "naamOfficieel") {
             naamOfficieel = value.replace(/\|/g, "");
-        } else {
+        } else if(key !== "label"){
             let formattedKey;
 
-            if (key === "isBAGwoonplaats") {
+            if(key === "isBAGnaam"){
+                formattedKey = "BAG-naam";
+            }else if (key === "isBAGwoonplaats") {
                 formattedKey = "BAG-woonplaats";
             } else if (key === "aantalinwoners") {
                 formattedKey = "Aantal inwoners"
@@ -556,6 +590,11 @@ export function processGetAllAttributes(res, clickedRes) {
         return a.index - b.index;
     });
 
+    if(clickedRes.getRes().getGeoJson().type !== "Point"){
+        let area = calculateArea(clickedRes.getAsFeature());
+        overigeAttributen.push({key: "oppervlakte", value: area});
+    }
+
     /**
      * Laad de attributen in de clicked res
      */
@@ -570,4 +609,9 @@ export function processGetAllAttributes(res, clickedRes) {
         tunnelNaam,
         sluisNaam,
         knoopPuntNaam);
+}
+
+function calculateArea(feature) {
+    let area = Math.round(turf.area(feature));
+    return area.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " m2";
 }

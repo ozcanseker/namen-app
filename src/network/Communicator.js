@@ -1,7 +1,9 @@
-import * as CommunicatorPDOK from './Communicators/CommunicatorPDOK';
-import * as CommunicatorTRIPLY from './Communicators/CommunicatorTRIPLY';
+import * as CommunicatorSPARQL from './Communicators/CommunicatorSPARQL';
 import * as ClickedCommunicator from './Communicators/ClickedCommunicator';
 import * as CommunicatorELASTICSEARCH from "./Communicators/CommunicatorELASTICSEARCH";
+
+const labsURL = "https://api.labs.kadaster.nl/datasets/kadaster/brt/services/brt/sparql";
+const pdokURL = "https://data.pdok.nl/sparql";
 
 /**
  * Laatste string waar op is gezocht
@@ -40,9 +42,9 @@ export async function getMatch(text, method) {
     let res;
 
     if(method === "tsp"){
-        res = await CommunicatorTRIPLY.getMatch(text);
+        res = await CommunicatorSPARQL.getMatch(text, labsURL);
     }else if(method === "psp"){
-        res = await CommunicatorPDOK.getMatch(text);
+        res = await CommunicatorSPARQL.getMatch(text, pdokURL);
     }else {
         res = await CommunicatorELASTICSEARCH.getMatch(text);
     }
@@ -65,11 +67,11 @@ export async function getMatch(text, method) {
  */
 export async function getAllAttribtes(clickedRes) {
     if(latestMethod === "tsp"){
-        await CommunicatorTRIPLY.getAllAttribtes(clickedRes);
+        await CommunicatorSPARQL.getAllAttribtes(clickedRes, labsURL);
     }else if(latestMethod === "psp"){
-        await CommunicatorPDOK.getAllAttribtes(clickedRes);
+        await CommunicatorSPARQL.getAllAttribtes(clickedRes, pdokURL);
     }else {
-        await CommunicatorTRIPLY.getAllAttribtes(clickedRes);
+        await CommunicatorSPARQL.getAllAttribtes(clickedRes, labsURL);
     }
 }
 

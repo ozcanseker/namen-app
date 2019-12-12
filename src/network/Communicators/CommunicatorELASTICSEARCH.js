@@ -1,5 +1,5 @@
 import {clusterObjects, processSearchScreenResults} from "../ProcessorMethods";
-import {queryTriply, queryBetterForType} from './CommunicatorTRIPLY';
+import {queryTriply, queryBetterForType} from './CommunicatorSPARQL';
 
 let latestString;
 

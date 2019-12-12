@@ -50,10 +50,10 @@ class ClickedResultaat extends Observable {
         if (this._naam === undefined) {
             if (this._naamOfficieel !== undefined) {
                 this._naam = naamOfficieel;
-            } else if (this._naamNL !== undefined) {
-                this._naam = this._naamNL;
-            } else {
+            } else if (this._naamFries !== undefined) {
                 this._naam = this._naamFries;
+            } else {
+                this._naam = this._naamNL;
             }
         }
     }
@@ -100,10 +100,10 @@ class ClickedResultaat extends Observable {
         if (this._naam === undefined) {
             if (this._naamOfficieel !== undefined) {
                 this._naam = this._naamOfficieel;
-            } else if (this._naamNL !== undefined) {
-                this._naam = this._naamNL;
-            } else {
+            } else if (this._naamFries !== undefined) {
                 this._naam = this._naamFries;
+            } else {
+                this._naam = this._naamNL;
             }
         }
 
