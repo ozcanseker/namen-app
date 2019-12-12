@@ -13,7 +13,7 @@ import {clusterObjects, sortByGeoMetryAndName} from "../ProcessorMethods";
  * @param right
  * @returns {Promise<string|[]>}
  */
-export async function getFromCoordinates(lat, long, top, left, bottom, right) {
+export async function getFromCoordinates(lat, long, top, left, bottom, right, setResFromOutside) {
     if (right - left > 0.05 || top - bottom > 0.0300) {
         left = long - 0.025;
         right = long + 0.025;
@@ -42,7 +42,7 @@ export async function getFromCoordinates(lat, long, top, left, bottom, right) {
     let streets = await queryTriply(queryForCoordinatesStreets(stop, sleft, sbottom, sright));
     if (streets.status > 300) {
         //bij een network error de string error
-        return clusterObjects(nonstreets);
+        return clusterObjects(nonstreets, undefined, setResFromOutside);
     }
 
     //Zet deze om in een array met Resultaat.js
@@ -50,7 +50,7 @@ export async function getFromCoordinates(lat, long, top, left, bottom, right) {
     streets = await makeSearchScreenResults(JSON.parse(streets));
 
     nonstreets = mergeResults(streets, nonstreets);
-    return clusterObjects(nonstreets);
+    return clusterObjects(nonstreets, undefined, setResFromOutside);
 }
 
 /**

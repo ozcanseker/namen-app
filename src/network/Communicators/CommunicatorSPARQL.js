@@ -21,7 +21,7 @@ let latestString = "";
  * @returns {Promise<string|undefined>} Undefined wanneer de fetch request veroudert is en een array met Resultaat.js als
  * de query nog niet veroudert is, Kan ook de string "error" terug krijgen. Dit is wanneer er een netwerk error is.
  */
-export async function getMatch(text, url) {
+export async function getMatch(text, url, setResFromOutside) {
     let isExactMatch = text.match(/".*"/);
     text = text.replace(/"/g, "");
 
@@ -44,7 +44,7 @@ export async function getMatch(text, url) {
     exactMatch = await makeSearchScreenResults(JSON.parse(exactMatch), url);
 
     if (isExactMatch) {
-        return clusterObjects(exactMatch);
+        return clusterObjects(exactMatch, text, setResFromOutside);
     }
 
     //Doe hierna nog een query voor dingen die op de ingetypte string lijken.
@@ -62,7 +62,8 @@ export async function getMatch(text, url) {
 
     //voeg de arrays samen.
     let res = mergeResults(exactMatch, result);
-    return bringExactNameToFront(text, clusterObjects(res));
+
+    return clusterObjects(res, text, setResFromOutside);
 }
 
 /**
