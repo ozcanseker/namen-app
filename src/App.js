@@ -109,7 +109,7 @@ class App extends React.Component {
             }
         });
 
-        console.log("version 0.9.1");
+        console.log("version 0.9.2");
     };
 
     /**

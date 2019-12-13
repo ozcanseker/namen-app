@@ -13,8 +13,6 @@ import Resultaat from "../model/Resultaat";
 import * as turf from "@turf/turf";
 import ClusterObject from "../model/ClusterObject";
 
-const workerScript = require('./worker');
-
 /**
  * Een file die alle classen van de brt bevat. Object klassen staan achter aan.
  * @type {*[]}
@@ -297,7 +295,7 @@ export function clusterObjects(res, text, setMethod) {
         latestString = text;
 
         if (!worker) {
-            worker = new Worker(workerScript);
+            worker = new Worker("./worker.js");
         }
 
         worker.postMessage(res);

@@ -2,7 +2,6 @@ import {
     processSearchScreenResults,
     processGetAllAttributes,
     clusterObjects,
-    bringExactNameToFront,
     firstLetterCapital
 } from "../ProcessorMethods";
 
