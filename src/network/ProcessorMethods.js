@@ -287,62 +287,124 @@ export function sortByGeoMetryAndName(values, searchString) {
     });
 }
 
-export function clusterObjects(res) {
-    // return res;
-    let map = new Map();
+let worker;
+let latestString;
 
-    for (let i = res.length - 1; i >= 0; i--) {
-        let naam = res[i].getType() === "Waterloop" ? res[i].getNaam() + res[i].getType() : res[i].getNaam() + res[i].getObjectClass();
+export function clusterObjects(res, text, setMethod) {
+    if (window.Worker) {
+        latestString = text;
 
-        if (res[i].getType() === "Waterloop" || res[i].getObjectClass() === "Wegdeel") {
-            if (map.has(naam)) {
-                map.get(naam).push(res[i]);
-            } else {
-                map.set(naam, [res[i]]);
-            }
-
-            res.splice(i, 1);
+        if (!worker) {
+            worker = new Worker("./worker.js");
         }
-    }
 
-    let clusterMap = new Map();
+        worker.postMessage(res);
 
-    map.forEach((value, key, map) => {
-        let mapCounter = 0;
+        worker.onmessage = (data) => {
+            data = data.data;
 
-        while (value.length > 0) {
-            let eerste = value.shift();
-            let cluster = [eerste];
+            if(text === latestString){
 
-            clusterMap.set(eerste.getNaam() + mapCounter, cluster);
-            mapCounter++;
+                let results = data.resultaat.map(res => {
+                    return new Resultaat(
+                        res._url,
+                        res._naam,
+                        res._type,
+                        res._geoJson,
+                        res._color,
+                        res.__objectClass
+                    )
+                });
+                let clusters = data.clusters.map(res => {
+                    let values = res._values;
 
-            for (let i = 0; i < cluster.length; i++) {
-                for (let j = value.length - 1; j >= 0; j--) {
-                    let inter = turf.lineIntersect(cluster[i].getGeoJson(), value[j].getGeoJson());
+                    values = values.map(res => {
+                        return new Resultaat(
+                            res._url,
+                            res._naam,
+                            res._type,
+                            res._geoJson,
+                            res._color,
+                            res.__objectClass
+                        )
+                    });
 
-                    if (inter.features.length > 0) {
-                        cluster.push(value[j]);
-                        value.splice(j, 1);
+                    return new ClusterObject(
+                        res._naam,
+                        res._type,
+                        res._geoJson,
+                        values,
+                        res._color,
+                        res._objectClass
+                    );
+
+                });
+
+                let res = clusters.concat(results);
+
+                if(text !== undefined){
+                    res = bringExactNameToFront(text, res);
+                }
+
+                setMethod(res, text !== undefined);
+            }
+        };
+
+        return "waiting";
+    } else {
+        let map = new Map();
+
+        for (let i = res.length - 1; i >= 0; i--) {
+            let naam = res[i].getType() === "Waterloop" ? res[i].getNaam() + res[i].getType() : res[i].getNaam() + res[i].getObjectClass();
+
+            if (res[i].getType() === "Waterloop" || res[i].getObjectClass() === "Wegdeel") {
+                if (map.has(naam)) {
+                    map.get(naam).push(res[i]);
+                } else {
+                    map.set(naam, [res[i]]);
+                }
+
+                res.splice(i, 1);
+            }
+        }
+
+        let clusterMap = new Map();
+
+        map.forEach((value, key, map) => {
+            let mapCounter = 0;
+
+            while (value.length > 0) {
+                let eerste = value.shift();
+                let cluster = [eerste];
+
+                clusterMap.set(eerste.getNaam() + mapCounter, cluster);
+                mapCounter++;
+
+                for (let i = 0; i < cluster.length; i++) {
+                    for (let j = value.length - 1; j >= 0; j--) {
+                        let inter = turf.lineIntersect(cluster[i].getGeoJson(), value[j].getGeoJson());
+
+                        if (inter.features.length > 0) {
+                            cluster.push(value[j]);
+                            value.splice(j, 1);
+                        }
                     }
                 }
             }
-        }
-    });
+        });
 
-    let clusters = [];
+        let clusters = [];
 
-    clusterMap.forEach(value => {
-        if(value.length > 1){
+        clusterMap.forEach(value => {
             let first = value[0];
             let geoJSON = [];
 
             value.forEach(res => {
                 let geo;
 
-                if(res.getGeoJson().type !== "Polygon"){
+                if (res.getGeoJson().type !== "Polygon") {
                     geo = turf.buffer(res.getGeoJson(), 0.0001).geometry;
-                }else{
+                } else {
                     geo = res.getGeoJson();
                 }
 
@@ -356,21 +418,18 @@ export function clusterObjects(res) {
             geoJSON = turf.union(...geoJSON).geometry;
 
             clusters.push(new ClusterObject(first.getNaam(), first.getType(), geoJSON, value, first.getColor(), first.getObjectClass()));
-        }else{
-            clusters.push(value[0]);
-        }
+        });
 
-    });
-
-    return clusters.concat(res);
+        return bringExactNameToFront(text, clusters.concat(res));
+    }
 }
 
-export function bringExactNameToFront(string, res){
+export function bringExactNameToFront(string, res) {
     let j = 0;
     string = string.toUpperCase();
 
     for (let i = 0; i < res.length; i++) {
-        if(string === res[i].getNaam().toUpperCase()){
+        if (string === res[i].getNaam().toUpperCase()) {
             let x = res[j];
             res[j] = res[i];
             res[i] = x;
@@ -425,7 +484,7 @@ export function processSearchScreenResults(res, latestString) {
             }
 
             naam = naam.replace(/\|/g, "");
-        }else if (fO.offnaam && fO.offnaam.value.toUpperCase() === latestString.toUpperCase()) {
+        } else if (fO.offnaam && fO.offnaam.value.toUpperCase() === latestString.toUpperCase()) {
             //kijk of het resultaat niet undefined is. Kijk ook of het gezochte string een deel van de naam bevat.
             //Dit heb je nodig want bijvoorbeeld bij frieze namen moet de applicatie de frieze naam laten zien.
             naam = fO.offnaam.value;
@@ -437,7 +496,7 @@ export function processSearchScreenResults(res, latestString) {
             naam = fO.naamNl.value;
         } else if (fO.naam && fO.naam.value.toUpperCase() === latestString.toUpperCase()) {
             naam = fO.naam.value;
-        }else if ((fO.brugnaam && fO.brugnaam.value.toUpperCase().includes(latestString.toUpperCase()))
+        } else if ((fO.brugnaam && fO.brugnaam.value.toUpperCase().includes(latestString.toUpperCase()))
             || (fO.tunnelnaam && fO.tunnelnaam.value.toUpperCase().includes(latestString.toUpperCase()))
             || (fO.sluisnaam && fO.sluisnaam.value.toUpperCase().includes(latestString.toUpperCase()))
             || (fO.knooppuntnaam && fO.knooppuntnaam.value.toUpperCase().includes(latestString.toUpperCase()))
@@ -453,7 +512,7 @@ export function processSearchScreenResults(res, latestString) {
             }
 
             naam = naam.replace(/\|/g, "");
-        }else if (fO.offnaam && fO.offnaam.value.toUpperCase().includes(latestString.toUpperCase())) {
+        } else if (fO.offnaam && fO.offnaam.value.toUpperCase().includes(latestString.toUpperCase())) {
             //kijk of het resultaat niet undefined is. Kijk ook of het gezochte string een deel van de naam bevat.
             //Dit heb je nodig want bijvoorbeeld bij frieze namen moet de applicatie de frieze naam laten zien.
             naam = fO.offnaam.value;
@@ -553,12 +612,12 @@ export function processGetAllAttributes(res, clickedRes) {
             types.push((stripUrlToType(value)));
         } else if (key === "naamOfficieel") {
             naamOfficieel = value.replace(/\|/g, "");
-        } else if(key !== "label"){
+        } else if (key !== "label") {
             let formattedKey;
 
-            if(key === "isBAGnaam"){
+            if (key === "isBAGnaam") {
                 formattedKey = "BAG-naam";
-            }else if (key === "isBAGwoonplaats") {
+            } else if (key === "isBAGwoonplaats") {
                 formattedKey = "BAG-woonplaats";
             } else if (key === "aantalinwoners") {
                 formattedKey = "Aantal inwoners"
@@ -595,7 +654,7 @@ export function processGetAllAttributes(res, clickedRes) {
         return a.index - b.index;
     });
 
-    if(clickedRes.getRes().getGeoJson().type !== "Point"){
+    if (clickedRes.getRes().getGeoJson().type !== "Point") {
         let area = calculateArea(clickedRes.getAsFeature());
         overigeAttributen.push({key: "oppervlakte", value: area});
     }

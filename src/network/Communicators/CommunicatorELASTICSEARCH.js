@@ -3,7 +3,7 @@ import {queryTriply, queryBetterForType} from './CommunicatorSPARQL';
 
 let latestString;
 
-export async function getMatch(text) {
+export async function getMatch(text, setResFromOutside) {
     //update eerst de laatst ingetype string
     latestString = text;
 
@@ -23,7 +23,7 @@ export async function getMatch(text) {
     console.log(res);
 
     res = await makeSearchScreenResults(res);
-    return clusterObjects(res);
+    return clusterObjects(res, text, setResFromOutside);
 }
 
 /**

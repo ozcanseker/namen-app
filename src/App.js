@@ -108,6 +108,8 @@ class App extends React.Component {
                 this.setState({clickedOnLayeredMap: undefined});
             }
         });
+
+        console.log("version 0.9.2");
     };
 
     /**
@@ -204,8 +206,13 @@ class App extends React.Component {
          * Krijg de bounds en geef deze ook door aan de communicator
          */
         let bounds = this.map.getBounds();
-        Communicator.getFromCoordinates(latLong.lat, latLong.lng, bounds.getNorth(), bounds.getWest(), bounds.getSouth(), bounds.getEast()).then(res => {
-            if (res !== undefined && res !== "error") {
+        Communicator.getFromCoordinates(latLong.lat, latLong.lng, bounds.getNorth(), bounds.getWest(), bounds.getSouth(), bounds.getEast(), this.setResFromOutside).then(res => {
+            if(res === "waiting"){
+                this.setState({
+                    updateIng : true,
+                    isFetching: false
+                })
+            }else if (res !== undefined && res !== "error") {
                 this.state.results.setDoubleResults(res);
                 this.setState({
                     isFetching: false
@@ -575,10 +582,15 @@ class App extends React.Component {
         /**
          * Roep de getMatch functie aan van de communicator
          **/
-        Communicator.getMatch(text.trim(), this.state.currentSelected).then(res => {
+        Communicator.getMatch(text.trim(), this.state.currentSelected, this.setResFromOutside).then(res => {
             //als je een error terug krijgt, dan betekent dat je wel een antwoord hebt maar dat het niet werkt.
 
-            if (res === "error") {
+            if(res === "waiting"){
+                this.setState({
+                    updateIng : true,
+                    isFetching: false
+                })
+            }else if (res === "error") {
                 this.setState({
                     isFetching: false
                 })
@@ -676,6 +688,16 @@ class App extends React.Component {
             }, () => {
                 this.handleDeleteClick();
             })
+        }
+    };
+
+    setResFromOutside = (res, isRightClick) => {
+        this.state.updateIng = false;
+
+        if(isRightClick === undefined){
+            this.state.results.setDoubleResults(res);
+        }else{
+            this.state.results.setResults(res)
         }
     };
 

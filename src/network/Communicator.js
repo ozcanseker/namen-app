@@ -36,17 +36,17 @@ export function getOptions(){
  * @param method:  de methode waarmee is gezocht
  * @returns {Promise<string|undefined>}
  */
-export async function getMatch(text, method) {
+export async function getMatch(text, method, setResFromOutside) {
     latestString = text;
     latestMethod = method;
     let res;
 
     if(method === "tsp"){
-        res = await CommunicatorSPARQL.getMatch(text, labsURL);
+        res = await CommunicatorSPARQL.getMatch(text, labsURL, setResFromOutside);
     }else if(method === "psp"){
-        res = await CommunicatorSPARQL.getMatch(text, pdokURL);
+        res = await CommunicatorSPARQL.getMatch(text, pdokURL, setResFromOutside);
     }else {
-        res = await CommunicatorELASTICSEARCH.getMatch(text);
+        res = await CommunicatorELASTICSEARCH.getMatch(text, setResFromOutside);
     }
 
     if((text === latestString && latestMethod === method) || res === "error"){
@@ -86,11 +86,11 @@ export async function getAllAttribtes(clickedRes) {
  * @param right
  * @returns {Promise<string|*[]|undefined>} Verwacht een lijst met Resultaat.js objecten terug
  */
-export async function getFromCoordinates(lat, long, top, left, bottom, right){
+export async function getFromCoordinates(lat, long, top, left, bottom, right, setResFromOutside){
     latestString = undefined;
     latestMethod = "tsp";
 
-    let res = await ClickedCommunicator.getFromCoordinates(lat, long, top, left, bottom, right);
+    let res = await ClickedCommunicator.getFromCoordinates(lat, long, top, left, bottom, right, setResFromOutside);
 
     if(latestString === undefined){
         return res;
