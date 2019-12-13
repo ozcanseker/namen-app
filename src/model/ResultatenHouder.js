@@ -3,35 +3,60 @@
  */
 import Observable from "./Observable";
 import {isShownClickedResults, sortByObjectClass} from "../network/ProcessorMethods";
+import ClusterObject from "./ClusterObject";
 
-class ResultatenHouder extends Observable{
-    constructor(){
+class ResultatenHouder extends Observable {
+    constructor() {
         super();
 
         this._results = [];
         this._rightClickedResults = [];
         this._clickedResult = undefined;
+        this._clickedCluster = undefined;
+    }
+
+    setClickedCluster(clickedCluster){
+        if(this._clickedCluster){
+            this._clickedCluster.unsubscribe(this);
+        }
+
+        this._clickedCluster = clickedCluster;
+        this._clickedCluster.subscribe(this);
+        this.updateSubscribers();
+    }
+
+    getClickedCluster(){
+        return this._clickedCluster;
+    }
+
+    clearClickedCluster(){
+        if(this._clickedCluster){
+            this._clickedCluster.unsubscribe(this);
+        }
+
+        this._clickedCluster = undefined;
+        this.updateSubscribers();
     }
 
     /**
      * Zet een clickedresultaat en subscribe aan deze
      * @param clicked
      */
-    setClickedResult(clicked){
+    setClickedResult(clicked) {
         this._clickedResult = clicked;
         this._clickedResult.subscribe(this);
         this.updateSubscribers();
     }
 
-    getClickedResult(){
+    getClickedResult() {
         return this._clickedResult;
     }
 
     /**
      * undefine de clicked resultaat en unsubscribe
      */
-    clearClickedResult(){
-        if(this._clickedResult){
+    clearClickedResult() {
+        if (this._clickedResult) {
             this._clickedResult.unsubscribe(this);
             this._clickedResult = undefined;
             this.updateSubscribers();
@@ -41,23 +66,30 @@ class ResultatenHouder extends Observable{
     /**
      * Clear alle resultaten en unsubscribe van all deze
      */
-    clearAll(){
-        if(this._clickedResult){
+    clearAll() {
+        if (this._clickedResult) {
             this._clickedResult.unsubscribe(this);
             this._clickedResult = undefined;
         }
 
         this._results.forEach(res => {
             res.unsubscribe(this);
-        })
+        });
 
         this._results = [];
 
         this._rightClickedResults.forEach(res => {
             res.unsubscribe(this);
-        })
+        });
 
         this._rightClickedResults = [];
+
+
+        if(this._clickedCluster){
+            this._clickedCluster.unsubscribe(this);
+        }
+
+        this._clickedCluster = undefined;
 
         this.updateSubscribers();
     }
@@ -66,76 +98,76 @@ class ResultatenHouder extends Observable{
      * Zet results en subscribe aan al deze
      * @param results
      */
-    setResults(results){
-
+    setResults(results) {
         this._results.forEach(res => {
             res.unsubscribe(this);
-        })
+        });
 
         results.forEach(res => {
             res.subscribe(this);
-        })
+        });
 
         this._results = results;
         this.updateSubscribers();
     }
 
-    getResults(){
+    getResults() {
         return this._results;
     }
 
     /**
      * Clear de resultaten
      */
-    clearResults(){
-        this._results.forEach(res => {
-            res.unsubscribe(this);
-        })
+    clearResults() {
+        if (this._results.length > 0) {
+            this._results.forEach(res => {
+                res.unsubscribe(this);
+            });
 
-        this._results = [];
+            this._results = [];
 
-        this.updateSubscribers();
+            this.updateSubscribers();
+        }
     }
 
     /**
      * Zet results en subscribe aan al deze
      * @param results
      */
-    setDoubleResults(results){
-
+    setDoubleResults(results) {
         this._rightClickedResults.forEach(res => {
             res.unsubscribe(this);
-        })
+        });
 
         results.forEach(res => {
             res.subscribe(this);
-        })
+        });
 
         this._rightClickedResults = results;
+
         this.updateSubscribers();
     }
 
-    getRightClickedRes(){
+    getRightClickedRes() {
         return this._rightClickedResults;
     }
 
     /**
      * Clear de resultaten
      */
-    clearDoubleResults(){
-        this._rightClickedResults.forEach(res => {
-            res.unsubscribe(this);
-        })
+    clearDoubleResults() {
+        if (this._rightClickedResults.length > 0) {
+            this._rightClickedResults.forEach(res => {
+                res.unsubscribe(this);
+            });
 
-        this._rightClickedResults = [];
+            this._rightClickedResults = [];
 
-        this.updateSubscribers();
+            this.updateSubscribers();
+        }
     }
 
-    update(){
-        sortByObjectClass(this._results);
-        sortByObjectClass(this._rightClickedResults);
-
+    update() {
         this.updateSubscribers();
     }
 
@@ -143,26 +175,35 @@ class ResultatenHouder extends Observable{
      * Krijg alle resultaten behalve clicked resultaat als feature terug.
      * @returns {[Feature]}
      */
-    getSearchedAllObjectsAsFeature(){
+    getSearchedAllObjectsAsFeature() {
         let geojson = [];
 
         this._results.forEach(res => {
-            if(res.getGeoJson()) {
+            if (res instanceof ClusterObject) {
+                geojson = geojson.concat(res.getAsFeature());
+            } else if (res.getGeoJson()) {
                 geojson.push(res.getAsFeature());
             }
         });
 
+        sortByObjectClass(geojson);
+
         return geojson;
     }
 
-    getClickedAllObjectsAsFeature(){
+    getClickedAllObjectsAsFeature() {
         let geojson = [];
 
         this._rightClickedResults.forEach(res => {
-            if(res.getGeoJson() && isShownClickedResults(res)) {
+            if (res instanceof ClusterObject) {
+                geojson = geojson.concat(res.getAsFeature());
+            }else if (res.getGeoJson() && isShownClickedResults(res)) {
                 geojson.push(res.getAsFeature());
             }
-        })
+        });
+
+        sortByObjectClass(geojson);
+
         return geojson;
     }
 }

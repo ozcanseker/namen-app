@@ -4,6 +4,14 @@
 import Observable from "./Observable";
 
 class Resultaat extends Observable{
+    /**
+     * @param url string
+     * @param naam string
+     * @param type string
+     * @param geoJson geoJson object
+     * @param color string
+     * @param objectClass string
+     */
     constructor(url , naam, type, geoJson, color, objectClass){
         super();
         this._url = url;
@@ -19,11 +27,12 @@ class Resultaat extends Observable{
     }
 
     /**
-     * Wordt gebruikt om de rest van de attributen in te laden
+     * Wordt gebruikt om de rest van de attributen in te laden als je ze eerst niet hebt
      * @param naam string
      * @param type string
      * @param geojson GeoJson
-     * @param color color of the drawn element
+     * @param color string
+     * @param objectClass string
      */
     setSecondProperties(naam, type, geojson, color, objectClass){
         this._type = type;
@@ -55,13 +64,17 @@ class Resultaat extends Observable{
         return this._geoJson;
     }
 
+    setGeoJson(geoJson){
+        this._geoJson = geoJson;
+    }
+
     getColor(){
         return this._color;
     }
 
     /**
      * Geeft een feature object terug met zichzelf en geojson
-     * @returns {{geometry: GeoJson, type: string, properties: Resultaat}}
+     * @returns {{geometry: GeoJson, properties: Resultaat}}
      */
     getAsFeature(){
         return  {

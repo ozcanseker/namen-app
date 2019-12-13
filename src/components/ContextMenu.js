@@ -1,5 +1,6 @@
 import React from 'react';
 import './style/ContextMenu.scss'
+import _ from 'lodash';
 
 /**
  * Dit is het menu dat tervoorschijn komt als je op de kaart klikt met meerdere lagen.
@@ -17,12 +18,15 @@ class ContextMenu extends React.Component {
     componentDidMount() {
         //Kijk wat de hoogte en breedte is van de pagina wanneer deze component tevoorschijn komt.
         this.updateWindowDimensions();
-        window.addEventListener('resize', this.updateWindowDimensions);
+
+        //debounce zodat het niet tig keer wordt aangeroepen.
+        this.updateWindowDimensionsDebounce = _.debounce(this.updateWindowDimensions, 200);
+        window.addEventListener('resize', this.updateWindowDimensionsDebounce);
     }
 
     componentWillUnmount() {
-        //Unmount de listener als de applicatie sluit
-        window.removeEventListener('resize', this.updateWindowDimensions);
+        //Unmount de listener als de component sluit
+        window.removeEventListener('resize', this.updateWindowDimensionsDebounce);
     }
 
     updateWindowDimensions = () => {
@@ -40,6 +44,11 @@ class ContextMenu extends React.Component {
         }
     }
 
+    onClick = (resOnClick) => {
+        resOnClick();
+        this.props.resetCoordinates();
+    };
+
     render() {
         let myStyle;
 
@@ -55,11 +64,12 @@ class ContextMenu extends React.Component {
                 left = this.state.widthPage - this.state.xMenu;
             }
 
+            //zelfde met hoogte
             if ((this.state.heightPage - top) < this.state.yMenu) {
                 top = this.state.heightPage - this.state.yMenu;
             }
 
-            //de -10 is ervoor, als de gebruiker klikt zal deze altijd over de applicatie heen gaan.
+            // - 10 zodat de gebruiker altijd over de component heen hovert als deze geopend wordt
             myStyle = {
                 position: 'absolute',
                 top: `${top - 10}px`,
@@ -75,14 +85,16 @@ class ContextMenu extends React.Component {
 
         //voor elk element crëer een optie
         let elements = this.props.objectsOverLayedOnMap.map(res => {
-            return (<p key={res.head + res.sub + res.subColor} onClick={res.onClick}>
+            return (<p key={res.head + res.sub + res.subColor} onClick={() => {
+                this.onClick(res.onClick);
+            }}>
                 <b>{res.head} </b>
                 <span
                     style={{color: this.props.getHexFromColor(res.subColor, true)}}>{res.sub}</span>
             </p>);
         });
 
-        //geef de compoenent terug.
+        //geef de component terug.
         //als de gebruiker van de component af gaat, laat deze dan verdwijnen. zie onMouseLeave.
         return (<div style={myStyle}
                      className="contextMenuContainer"
@@ -95,8 +107,7 @@ class ContextMenu extends React.Component {
                      }}
                      onContextMenu={(e) => {
                          e.preventDefault();
-                     }}
-        >
+                     }}>
             {elements}
         </div>)
     }

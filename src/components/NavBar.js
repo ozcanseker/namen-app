@@ -9,10 +9,12 @@ class NavBar extends React.Component{
         return(
             <Switch>
                 <Route exact path="/"
-                       render={(props) => <EmptyBar loading = {this.props.loading}/>}
+                       render={(props) => <EmptyBar loading = {this.props.loading}
+                                                    aantalZoekResultaten = {this.props.aantalZoekResultaten}/>}
                 />
                 <Route
-                    render={(props) => <BackButton loading = {this.props.loading} onBack = {this.props.onBack}/>}
+                    render={(props) => <BackButton loading = {this.props.loading} onBack = {this.props.onBack}
+                                                   aantalZoekResultaten = {this.props.aantalZoekResultaten}/>}
                 />
             </Switch>
         )
@@ -39,7 +41,9 @@ function BackButton(props){
     }
 
     return (
-        <div className={"backButton cursorPointer " + class_} onClick={props.onBack}><p>&larr; Terug</p></div>
+        <div className={"backButton cursorPointer " + class_} onClick={props.onBack}><span>&larr; Terug</span>
+            <span style={{float: "right"}}>{props.aantalZoekResultaten}</span>
+        </div>
     )
 }
 

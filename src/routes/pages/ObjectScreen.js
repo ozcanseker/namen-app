@@ -15,7 +15,7 @@ class ObjectScreen extends React.Component {
     }
 
     /**
-     * Alle alle gegevens op van de clickedResult.
+     * Haal alle gegevens op van de clickedResult.
      * @param url
      */
     getNamenGegevens = (url) => {
@@ -35,7 +35,6 @@ class ObjectScreen extends React.Component {
         let tableNamen;
         let tableRest;
 
-
         if (res) {
             if(res.getNaam()){
                 naam = (<h1>{res.getNaam()}</h1>);
@@ -50,7 +49,6 @@ class ObjectScreen extends React.Component {
                     naam = (<h1>{res.getSluisNaam()}</h1>);
                 }
             }
-
 
             let color;
 
@@ -93,15 +91,6 @@ class ObjectScreen extends React.Component {
                          <td><b>Naam Nederlands:</b></td>
                          <td>{res.getNaamNl()}</td>
                      </tr>
-                )
-            }
-
-            if (res.getNaam() && !res.getNaamNl()) {
-                naam2 = (
-                    <tr>
-                        <td><b>Naam:</b></td>
-                        <td>{res.getNaam()}</td>
-                    </tr>
                 )
             }
 

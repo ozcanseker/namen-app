@@ -5,7 +5,21 @@
 import Observable from "./Observable";
 
 class ClickedResultaat extends Observable {
-    constructor(res, naam, naamOfficieel, naamNl, naamFries, types, overige) {
+    /**
+     *
+     * @param res het resultaat dat is aangeklikt
+     * @param naam
+     * @param naamOfficieel
+     * @param naamNl
+     * @param naamFries
+     * @param types [] van types
+     * @param overige [{key: string, value: string}] van overige attributen
+     * @param burgNaam
+     * @param tunnelNaam
+     * @param sluisNaam
+     * @param knoopPuntNaam
+     */
+    constructor(res, naam, naamOfficieel, naamNl, naamFries, types, overige, burgNaam, tunnelNaam, sluisNaam, knoopPuntNaam) {
         super();
 
         this._res = res;
@@ -13,7 +27,12 @@ class ClickedResultaat extends Observable {
         this._naamOfficieel = naamOfficieel;
         this._naamNL = naamNl;
         this._naamFries = naamFries;
+        this._brugNaam = burgNaam;
+        this._tunnelNaam = tunnelNaam;
+        this._sluisNaam = sluisNaam;
+        this._knoopPuntNaam = knoopPuntNaam;
 
+        //types is een array, je kan meerdere dingen toevoegen.
         if (types) {
             this._types = types;
         } else {
@@ -23,7 +42,7 @@ class ClickedResultaat extends Observable {
         if (overige) {
             this._overige = overige;
             let url = this._res.getUrl();
-            this._overige.unshift({key: "brt link", value: url})
+            this._overige.unshift({key: "BRT link", value: url})
         } else {
             this._overige = [];
         }
@@ -31,10 +50,10 @@ class ClickedResultaat extends Observable {
         if (this._naam === undefined) {
             if (this._naamOfficieel !== undefined) {
                 this._naam = naamOfficieel;
-            } else if (this._naamNL !== undefined) {
-                this._naam = this._naamNL;
-            } else {
+            } else if (this._naamFries !== undefined) {
                 this._naam = this._naamFries;
+            } else {
+                this._naam = this._naamNL;
             }
         }
     }
@@ -52,13 +71,16 @@ class ClickedResultaat extends Observable {
     }
 
     /**
-     *
-     * @param naam String
-     * @param naamOfficieel String
-     * @param naamnl String
-     * @param naamfries String
-     * @param type array Strings
-     * @param overige array {key: string, value: string}
+     * @param naam
+     * @param naamOfficieel
+     * @param naamnl
+     * @param naamfries
+     * @param type [] van types
+     * @param overige [{key: string, value: string}] van overige attributen
+     * @param burgNaam
+     * @param tunnelNaam
+     * @param sluisNaam
+     * @param knoopPuntNaam
      */
     loadInAttributes(naam, naamOfficieel, naamnl, naamfries, type, overige, burgNaam, tunnelNaam, sluisNaam, knoopPuntNaam) {
         this._naam = naam;
@@ -78,10 +100,10 @@ class ClickedResultaat extends Observable {
         if (this._naam === undefined) {
             if (this._naamOfficieel !== undefined) {
                 this._naam = this._naamOfficieel;
-            } else if (this._naamNL !== undefined) {
-                this._naam = this._naamNL;
-            } else {
+            } else if (this._naamFries !== undefined) {
                 this._naam = this._naamFries;
+            } else {
+                this._naam = this._naamNL;
             }
         }
 
@@ -126,6 +148,10 @@ class ClickedResultaat extends Observable {
 
     getKnooppuntNaam(){
         return this._knoopPuntNaam;
+    }
+
+    getRes(){
+        return this._res;
     }
 }
 

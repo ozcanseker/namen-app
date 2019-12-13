@@ -5,6 +5,8 @@ import L from "leaflet";
 import React from 'react';
 import * as turf from '@turf/turf';
 import * as inside from "point-in-geopolygon";
+import _ from 'lodash';
+
 /**
  * UI
  */
@@ -12,16 +14,19 @@ import Routes from './routes/Routes'
 import {Dropdown, Icon, Search} from 'semantic-ui-react'
 import NavBar from "./components/NavBar";
 import Loader from "./components/Loader";
+
 /**
  * Assets
  */
 import './App.css';
 import KadasterImg from './assets/Logo-kadaster.png';
+
 /**
  * Netwerk
  */
 import *  as Communicator from './network/Communicator';
 import {Link, matchPath, withRouter} from "react-router-dom";
+
 /**
  * Model
  */
@@ -29,7 +34,7 @@ import ResultatenHouder from './model/ResultatenHouder';
 import ClickedResultaat from "./model/ClickedResultaat";
 import {DefaultIcon, Icons} from "./components/Icons";
 import ContextMenu from "./components/ContextMenu";
-
+import ClusterObject from "./model/ClusterObject";
 
 class App extends React.Component {
     constructor(props) {
@@ -40,9 +45,9 @@ class App extends React.Component {
             isFetching: false,
             results: new ResultatenHouder(),
             updateIng: false,
-            currentSelected: "tsp",
-            clickedOnLayeredMap : undefined,
-            objectsOverLayedOnMap : []
+            currentSelected: Communicator.getOptions()[0].value,
+            clickedOnLayeredMap: undefined,
+            objectsOverLayedOnMap: []
         };
 
         //subscribe aan de resulatatenHouder
@@ -82,6 +87,7 @@ class App extends React.Component {
         //Wanneer je dubbelklikt op de kaart krijg dan alle locaties terug er om heen.
         this.map.on('contextmenu', this.handleRightMouseClick);
 
+        //disable the zoom
         this.map.doubleClickZoom.disable();
 
         //zet de geojson layer en de functies die worden aangeroepen.
@@ -93,19 +99,24 @@ class App extends React.Component {
             style: this.getStyle
         }).addTo(this.map);
 
-        // this.popup = L.popup({
-        //     autoPan: false,
-        //     closeButton: false
-        // })
-        //     .setLatLng([52.20936, 5.2])
-        //     .setContent("aaaaa")
-        //     .openOn(this.map);
-
-
         //de groep voor de markers
         this.markerGroup = L.featureGroup().addTo(this.map);
+
+        //dit is voor mobiele applicatie. Als er gesleept wordt sluit dan het context menu.
+        this.map.on('dragstart', () => {
+            if (this.state.clickedOnLayeredMap) {
+                this.setState({clickedOnLayeredMap: undefined});
+            }
+        });
+
+        console.log("version 0.9.2");
     };
 
+    /**
+     * Krijg de style voor een bepaalde feature
+     * @param feature
+     * @returns {{color: (string|*)}}
+     */
     getStyle = (feature) => {
         if (feature.properties.getColor()) {
             return {
@@ -114,11 +125,17 @@ class App extends React.Component {
         }
     };
 
+    /**
+     * Krijg een hex van een kleur.
+     * @param color
+     * @param text bool of het tekst is of niet
+     * @returns {string|undefined}
+     */
     getHexFromColor(color, text) {
         if (color === "turqoise") {
-            if(text){
+            if (text) {
                 return "#15a49f";
-            }else{
+            } else {
                 return "#3DCCC7";
             }
         } else if (color === "purple") {
@@ -134,60 +151,68 @@ class App extends React.Component {
         } else if (color === "orange") {
             return "#FAA916";
         } else if (color === "yellow") {
-            if(text){
+            if (text) {
                 return "#FAA916";
-            }else{
+            } else {
                 return "#F0F66E";
             }
-        }else if(color === "mediumaquamarine"){
+        } else if (color === "mediumaquamarine") {
             return "#66CDAA";
-        } else{
-            if(text){
+        } else {
+            if (text) {
                 return "#000";
-            }else{
+            } else {
                 return undefined;
             }
         }
     }
 
     /**
-     * Handel de dubbel klik.
-     * Als je op de dubbel klikt op de kaart krijg je alle nabije namen.
-     * Moet nog geimplemteert worden.
+     * Als je recht klikt op de kaart. Haal resulataten op en laat deze zien.
      **/
     handleRightMouseClick = (e) => {
         let latLong = e.latlng;
 
+        //close pop ups van de kaart
         this.map.closePopup();
         this.popup = undefined;
 
+        /**
+         * Kijk of de gebruiker op de ObjectScreen zit
+         */
         let match = matchPath(this.props.location.pathname, {
             path: "/result/:id",
             exact: true,
             strict: true
         });
 
-        this.setState({
-            searchQuery: ""
-        });
         this.state.results.clearAll();
 
+        /**
+         * Als de gebruiker op een object screen zit ga dan terug.
+         */
         if (match) {
             this.props.history.goBack();
         } else if (this.props.location.pathname !== "/result") {
             this.props.history.push(`/result`);
         }
 
-        let bounds = this.map.getBounds();
-
         this.setState({
-            isFetching: true
+            isFetching: true,
+            searchQuery: ""
         });
 
-        Communicator.getFromCoordinates(latLong.lat, latLong.lng, bounds.getNorth(), bounds.getWest(), bounds.getSouth(), bounds.getEast()).then(res => {
-            if (res === "error") {
-
-            } else if (res !== undefined) {
+        /**
+         * Krijg de bounds en geef deze ook door aan de communicator
+         */
+        let bounds = this.map.getBounds();
+        Communicator.getFromCoordinates(latLong.lat, latLong.lng, bounds.getNorth(), bounds.getWest(), bounds.getSouth(), bounds.getEast(), this.setResFromOutside).then(res => {
+            if(res === "waiting"){
+                this.setState({
+                    updateIng : true,
+                    isFetching: false
+                })
+            }else if (res !== undefined && res !== "error") {
                 this.state.results.setDoubleResults(res);
                 this.setState({
                     isFetching: false
@@ -224,6 +249,7 @@ class App extends React.Component {
 
         //wanner je over de marker gaat laat de pop up zien
         marker.on('mouseover', onHover);
+        //geef deze ook aan de feature zodat wanneer je over de resultaten lijst gaat het ook op de kaart te zien is.
         feature.properties._setOnHover(onHover);
 
         //wanneer je er van af gaat laat het weg
@@ -238,12 +264,20 @@ class App extends React.Component {
         return marker;
     };
 
+    /**
+     * Krijg alle geojson objecten die in de resultatenhouder zit waar dit punt in zit.
+     * @param lng
+     * @param lat
+     * @returns {*[]}
+     */
     getAllGeoJsonObjectContainingPoint = (lng, lat) => {
         let res;
 
-        if(this.state.results.getClickedResult()){
+        if (this.state.results.getClickedResult()) {
             res = [this.state.results.getClickedResult().getAsFeature()];
-        }else if (this.state.results.getRightClickedRes().length > 0) {
+        } else if (this.state.results.getClickedCluster()) {
+            res = this.state.results.getClickedCluster().getValuesAsFeatures();
+        } else if (this.state.results.getRightClickedRes().length > 0) {
             res = this.state.results.getClickedAllObjectsAsFeature();
         } else {
             res = this.state.results.getSearchedAllObjectsAsFeature();
@@ -258,15 +292,16 @@ class App extends React.Component {
             let col = {type: "FeatureCollection", features: [res]};
             return inside.feature(col, [lng, lat]) !== -1;
         });
-    }
+    };
 
     /**
-     * Tekent de objecten op de kaart.
+     * Wordt aangeroepen elke keer als er een geojson object wordt getekend.
      **/
     handleGeoJsonLayerDrawing = (feature, layer) => {
+        //de punt wordt al afgehandeld door addMarker
         if (feature.geometry.type !== 'Point') {
             //vindt eerst de center
-            var latLong = this.getCenterGeoJson(feature);
+            let latLong = this.getCenterGeoJson(feature);
 
             //op deze center voeg een marker toe
             this.addMarker(feature, latLong);
@@ -282,10 +317,10 @@ class App extends React.Component {
 
                 content = `<div class="popUpMouseOver">${content}<div>`;
 
-                if(contains.length < 1){
+                if (contains.length < 1) {
                     this.map.closePopup();
                     this.popup = undefined;
-                }else if (!this.popup) {
+                } else if (!this.popup) {
                     this.popup = L.popup({
                         autoPan: false,
                         closeButton: false
@@ -296,8 +331,8 @@ class App extends React.Component {
                 }
             });
 
-            //laat de pop up zien als je erover gaat
-            layer.on('mousemove', (e) => {
+            //dit is de functie die wordt aangeroepen als je over een object heen gaat met je muis.
+            let mouseOverFunction = (e) => {
                 let contains = this.getAllGeoJsonObjectContainingPoint(e.latlng.lng, e.latlng.lat);
 
                 let content = contains.map(res => {
@@ -305,10 +340,10 @@ class App extends React.Component {
                     <span class="subTextMarker" style="color:${this.getHexFromColor(res.properties.getColor(), true)};" >${res.properties.getType()} </span>`;
                 }).reverse().join(`<br/>`);
 
-                if(contains.length < 1){
+                if (contains.length < 1) {
                     this.map.closePopup();
                     this.popup = undefined;
-                }else if(this.popup){
+                } else if (this.popup) {
                     this.popup.setLatLng(e.latlng);
 
                     content = `<div class="popUpMouseOver">${content}<div>`;
@@ -316,7 +351,7 @@ class App extends React.Component {
                     if (content !== this.popup.getContent()) {
                         this.popup.setContent(content);
                     }
-                }else{
+                } else {
                     this.popup = L.popup({
                         autoPan: false,
                         closeButton: false
@@ -325,7 +360,10 @@ class App extends React.Component {
                         .setContent(content)
                         .openOn(this.map);
                 }
-            });
+            };
+
+            //Je kan ervoor kiezen om deze functionalitier te trottelen.
+            layer.on('mousemove', _.throttle(mouseOverFunction, 0));
 
             //sluit de pop up als je er van af gaat
             layer.on('mouseout', (e) => {
@@ -335,66 +373,88 @@ class App extends React.Component {
 
             //als je er op klikt ga er dan naartoe
             layer.on('click', (e) => {
+                //check of er meerdere lagen zijn
                 let contains = this.getAllGeoJsonObjectContainingPoint(e.latlng.lng, e.latlng.lat);
 
+                //als er maar één laag is
                 if (contains.length < 2) {
                     this.onClickItem(feature.properties)
                 } else {
-                    //open hier iets
-
-                    let options =  contains.reverse().map(res => {
+                    //agrageer de opties en geef deze aan het context menu
+                    let options = contains.reverse().map(res => {
                         let func = () => {
                             this.onClickItem(res.properties);
                         };
 
-                        return {head: res.properties.getNaam(),
+                        return {
+                            head: res.properties.getNaam(),
                             sub: res.properties.getType(),
-                            subColor:res.properties.getColor(),
-                            onClick:  func}
+                            subColor: res.properties.getColor(),
+                            onClick: func
+                        }
                     });
 
                     this.setState({
-                        clickedOnLayeredMap : {x:e.originalEvent.pageX , y:e.originalEvent.pageY},
-                        objectsOverLayedOnMap : options
+                        clickedOnLayeredMap: {x: e.originalEvent.pageX, y: e.originalEvent.pageY},
+                        objectsOverLayedOnMap: options
                     });
                 }
             });
         }
     };
 
+    /**
+     * Deze methode kan worden aangeroepen om het context menu te laten verdrwijnen.
+     */
     resetClickedOnLayeredMap = () => {
         this.setState({
-            clickedOnLayeredMap : undefined
+            clickedOnLayeredMap: undefined
         });
-    }
+    };
 
     /**
-     * Wanneer iemand op een marker of getekend deel klikt, voer deze methode uit.
+     * Wanneer iemand op een resultaat klikt vor dan deze methode uit.
      **/
     onClickItem = (res) => {
-        //maak een nieuwe clickedresultaat
-        let clickedRes = new ClickedResultaat(res);
+        if (res instanceof ClusterObject) {
+            this.state.results.setClickedCluster(res);
+            this.props.history.push(`/result/${res.getNaam()}`);
+        } else {
+            //maak een nieuwe clickedresultaat
+            let clickedRes = new ClickedResultaat(res);
 
-        this.setState({
-            clickedOnLayeredMap: undefined
-        })
+            this.setState({
+                clickedOnLayeredMap: undefined
+            });
 
-        //zet de resultatenhouder de clickedresultaat.
-        this.state.results.setClickedResult(clickedRes);
+            //zet de resultatenhouder de clickedresultaat.
+            this.state.results.setClickedResult(clickedRes);
 
-        //krijg de center van de plek waar je naartoe wilt.
-        let center = this.getCenterGeoJson(res.getGeoJson());
-        let zoom = this.map.getZoom();
+            //krijg de center van de plek waar je naartoe wilt.
+            let center = this.getCenterGeoJson(res.getGeoJson());
+            let zoom = this.map.getZoom();
 
-        //als de gebruiker ingezoomt is, zoom dan niet uit.
-        if (zoom < 10) {
-            zoom = 10;
+            //als de gebruiker ingezoomt is, zoom dan niet uit.
+            if (zoom < 10) {
+                zoom = 10;
+            }
+
+            //zet de view.
+            this.map.setView(center, zoom);
+
+
+            let match = matchPath(this.props.location.pathname, {
+                path: "/result/:id",
+                exact: true,
+                strict: true
+            });
+
+            if (match) {
+                this.props.history.push(`/result/${res.getNaam()}/${res.getNaam()}`);
+            } else {
+                this.props.history.push(`/result/${res.getNaam()}`);
+            }
         }
-
-        //zet de view.
-        this.map.setView(center, zoom);
-
-        this.props.history.push(`/result/${res.getNaam()}`);
     };
 
     /**
@@ -402,19 +462,43 @@ class App extends React.Component {
      **/
     getCenterGeoJson = (geojson) => {
         //kijk eerst naar de center
-        var centroid = turf.center(geojson);
+        let centroid = turf.center(geojson);
 
-        try {
+        let geoJsonFeature = geojson.geometry ? geojson : {type: 'Feature', geometry: geojson};
+        geojson = geojson.geometry ? geojson.geometry :  geojson;
+
+        if(geojson.type !== "MultiPolygon") {
             //als deze niet in het geojson object ligt, gebruik dan de centroid
-            if (!turf.booleanContains(geojson, centroid)) {
+            if (!turf.booleanContains(geoJsonFeature, centroid)) {
+                centroid = turf.centroid(geoJsonFeature);
+            }
+
+            if(!turf.booleanContains(geojson, centroid)){
+                centroid = turf.pointOnFeature(geojson);
+            }
+        }else{
+            let lon = centroid.geometry.coordinates[0];
+            let lat = centroid.geometry.coordinates[1];
+            let col = {type: "FeatureCollection", features: [geoJsonFeature]};
+            let isInside = inside.feature(col, [lon, lat]) !== -1;
+
+            if (!isInside) {
                 centroid = turf.centroid(geojson);
             }
-        } catch (e) {
+
+            lon = centroid.geometry.coordinates[0];
+            lat = centroid.geometry.coordinates[1];
+            col = {type: "FeatureCollection", features: [geoJsonFeature]};
+            isInside = inside.feature(col, [lon, lat]) !== -1;
+
+            if(!isInside){
+                centroid = turf.pointOnFeature(geojson);
+            }
         }
 
         //krijg de lat en long
-        var lon = centroid.geometry.coordinates[0];
-        var lat = centroid.geometry.coordinates[1];
+        let lon = centroid.geometry.coordinates[0];
+        let lat = centroid.geometry.coordinates[1];
 
         return [lat, lon];
     };
@@ -431,16 +515,24 @@ class App extends React.Component {
         //als de text iets heef
         if (text) {
             //zet dan eerst de state
+
             this.setState({
-                searchQuery: text
+                searchQuery: text,
+                isFetching: true
             });
 
             //haal vorige resultaten weg
             this.state.results.clearClickedResult();
             this.state.results.clearDoubleResults();
+            this.state.results.clearClickedCluster();
+
+            //debounce zodat het pas wordt uitgevoerd wanneer de gebuiker stopt met typen.
+            if (!this.debounceDoSearch) {
+                this.debounceDoSearch = _.debounce(this.doSearch, 500);
+            }
 
             //roep de methode aan die de zoek functie aanroept
-            this.doSearch(text);
+            this.debounceDoSearch(text);
 
             //Als je op het hoofscherm bent ga dan naar de result screen
             if (this.props.location.pathname === "/") {
@@ -460,9 +552,18 @@ class App extends React.Component {
             //verwijder alle resultaten
             this.state.results.clearAll();
 
+            let match2 = matchPath(this.props.location.pathname, {
+                path: "/result/:id/:idd",
+                exact: true,
+                strict: true
+            });
+
+
             //ga terug naar het hoofdscherm
             if (this.props.location.pathname === "/result") {
                 this.props.history.goBack();
+            } else if (match2) {
+                this.props.history.go(-3);
             } else if (this.props.location.pathname !== '/') {
                 this.props.history.go(-2);
             }
@@ -478,18 +579,18 @@ class App extends React.Component {
      * Roept de communicator aan en haalt de resultaten op.
      **/
     doSearch = (text) => {
-        //zet dit op true zodat de loader aan gaat.
-        this.setState({
-            isFetching: true
-        });
-
         /**
          * Roep de getMatch functie aan van de communicator
          **/
-        Communicator.getMatch(text.trim(), this.state.currentSelected).then(res => {
+        Communicator.getMatch(text.trim(), this.state.currentSelected, this.setResFromOutside).then(res => {
             //als je een error terug krijgt, dan betekent dat je wel een antwoord hebt maar dat het niet werkt.
 
-            if (res === "error") {
+            if(res === "waiting"){
+                this.setState({
+                    updateIng : true,
+                    isFetching: false
+                })
+            }else if (res === "error") {
                 this.setState({
                     isFetching: false
                 })
@@ -499,7 +600,7 @@ class App extends React.Component {
             } else if (res !== undefined) {
                 this.setState({
                     isFetching: false
-                })
+                });
                 this.state.results.setResults(res);
             }
         });
@@ -510,7 +611,7 @@ class App extends React.Component {
      **/
     handleDeleteClick = () => {
         this.onSearchChange({}, {value: ""});
-    }
+    };
 
     /**
      * Wanneer er op de terug knop wordt geklikt in de applicatie aka <-- terug.
@@ -525,35 +626,33 @@ class App extends React.Component {
             strict: true
         });
 
+        let match2 = matchPath(this.props.location.pathname, {
+            path: "/result/:id/:idd",
+            exact: true,
+            strict: true
+        });
+
         if (this.props.location.pathname === "/result") {
             //Als je op de result screen bent ga dan terug naar het hoofdscherm
-            this.handleDeleteClick();
+            if (this.state.results.getClickedCluster()) {
+                this.state.results.clearClickedCluster();
+            } else {
+                this.handleDeleteClick();
+            }
         } else if (match) {
             //ga eerst een pagina terug
             this.props.history.goBack();
 
             //Als je op een geklikte resultaat scherm bent ga dan terug naar de result scherm
             this.state.results.clearClickedResult();
+            this.state.results.clearClickedCluster();
+        } else if (match2) {
+            //ga eerst een pagina terug
+            this.props.history.goBack();
+
+            //Als je op een geklikte resultaat scherm bent ga dan terug naar de result scherm
+            this.state.results.clearClickedResult();
         }
-    };
-
-    /**
-     * Krijg een timeout nummer gebasseerd op het aantal resultaten.
-     * @returns {number}
-     */
-    getTimeOut = () => {
-        let timeout = 100;
-        let results = this.state.results;
-
-        if (results.getResults().length > 40 || results.getRightClickedRes().length > 1) {
-            timeout = 600;
-        } else if (results.getResults().length > 20) {
-            timeout = 200;
-        } else if (results.getResults().length > 10) {
-            timeout = 100;
-        }
-
-        return timeout;
     };
 
     /**
@@ -564,33 +663,23 @@ class App extends React.Component {
 
         this.setState({
             results: results
-        })
+        });
 
-        //updateing variabele kijkt of de kaart nu bezig is met het wachten op updating/
-        if (!this.updateIng) {
-            this.updateIng = true;
-
-            //dit is voor de lader boven op de kaart
-            this.setState({
-                updateIng: true
-            });
-
-            //krijg een timeout ms
-            let timeout;
-
-            if (this.state.results.getClickedResult()) {
-                timeout = 0;
-            } else {
-                timeout = this.getTimeOut();
-            }
-
-            //hierna roep de de settimout aan
-            setTimeout(() => {
-                this.updateMap(results);
-            }, timeout);
+        /**
+         * Soms wordt de update functie iets te vaak angereoepen dus debounce het
+         */
+        if (!this.updateMapDebounce) {
+            this.updateMapDebounce = _.debounce(this.updateMap, 200);
         }
+
+        this.updateMapDebounce(results);
     };
 
+    /**
+     * Wordt aangeroepen als er op het tandwieltje wordt geklikt.
+     * @param e
+     * @param v
+     */
     dropDownSelector = (e, v) => {
         if (this.state.currentSelected !== v.value) {
             this.setState({
@@ -602,6 +691,16 @@ class App extends React.Component {
         }
     };
 
+    setResFromOutside = (res, isRightClick) => {
+        this.state.updateIng = false;
+
+        if(isRightClick === undefined){
+            this.state.results.setDoubleResults(res);
+        }else{
+            this.state.results.setResults(res)
+        }
+    };
+
     /**
      * Update de kaart.
      **/
@@ -609,12 +708,17 @@ class App extends React.Component {
         let results = this.state.results;
 
         //haal eerst alle marker weg
+        this.map.closePopup();
+        this.popup = undefined;
         this.markerGroup.clearLayers();
         this.geoJsonLayer.clearLayers();
 
         //als er een geklikt resultaat is, render dan alleen deze
         if (this.state.results.getClickedResult()) {
             let feature = this.state.results.getClickedResult().getAsFeature();
+            this.geoJsonLayer.addData(feature);
+        } else if (this.state.results.getClickedCluster()) {
+            let feature = this.state.results.getClickedCluster().getValuesAsFeatures();
             this.geoJsonLayer.addData(feature);
         } else if (this.state.results.getRightClickedRes().length > 0) {
             let geoJsonResults = results.getClickedAllObjectsAsFeature();
@@ -626,24 +730,86 @@ class App extends React.Component {
                 this.geoJsonLayer.addData(geoJsonResults);
             }
         }
+    };
 
-        //zet de updating naar false.
-        this.setState({
-            updateIng: false
-        });
-        this.updateIng = false;
-    }
-
+    /**
+     * Wordt aangeroepen wanneer iemand op de zoekbalk klikt.
+     */
     onFocus = () => {
-        if (this.state.searchQuery) {
-            this.onSearchChange({}, {value: this.state.searchQuery});
-        } else {
+        let match2 = matchPath(this.props.location.pathname, {
+            path: "/result/:id/:idd",
+            exact: true,
+            strict: true
+        });
+
+        let match = matchPath(this.props.location.pathname, {
+            path: "/result/:id",
+            exact: true,
+            strict: true
+        });
+
+        if (this.state.results.getRightClickedRes().length > 0) {
             this.handleDeleteClick();
+        } else if (match2) {
+            this.state.results.clearClickedResult();
+            this.state.results.clearClickedCluster();
+            this.props.history.go(-2);
+        } else if (match && this.state.results.getClickedCluster()) {
+            this.handleOnBackButtonClick();
+        } else if (this.state.results.getClickedResult()) {
+            this.handleOnBackButtonClick();
         }
     };
 
+    getZoekResultatenAantal = () => {
+        let aantalZoekResultaten;
+
+        if (this.state.results.getClickedResult()) {
+
+        } else if (this.state.results.getClickedCluster()) {
+            aantalZoekResultaten = this.state.results.getClickedCluster().getValues().length;
+        } else if (this.state.results.getRightClickedRes().length > 0) {
+            aantalZoekResultaten = this.state.results.getRightClickedRes().length;
+        } else {
+            aantalZoekResultaten = this.state.results.getResults().length;
+        }
+
+        if (aantalZoekResultaten > 989) {
+            aantalZoekResultaten = 900 + "+";
+        }
+
+        return aantalZoekResultaten;
+    };
+
     render() {
+        let aantalZoekResultaten = this.getZoekResultatenAantal();
+
+        let gearIcon;
+
         const options = Communicator.getOptions();
+        if (options.length > 1) {
+            gearIcon = (<Dropdown
+                className="cogIcon"
+                icon='cog'
+                upward={true}
+            >
+                <Dropdown.Menu>
+                    <Dropdown.Header
+                        content="Selecteer end-point"
+                    />
+                    <Dropdown.Divider
+                    />
+                    {options.map((option) => (
+                        <Dropdown.Item
+                            className="dropDownItem"
+                            key={option.value} {...option}
+                            active={this.state.currentSelected === option.value}
+                            onClick={this.dropDownSelector}
+                        />
+                    ))}
+                </Dropdown.Menu>
+            </Dropdown>);
+        }
 
         let icon;
         let className;
@@ -684,6 +850,7 @@ class App extends React.Component {
                         <NavBar
                             loading={this.state.isFetching}
                             onBack={this.handleOnBackButtonClick}
+                            aantalZoekResultaten={aantalZoekResultaten}
                         />
                         <div className="loaderDiv">
                             <Loader
@@ -695,47 +862,27 @@ class App extends React.Component {
                                 res={this.state.results}
                                 clickedResult={this.state.results.getClickedResult()}
                                 onClickItem={this.onClickItem}
-                                getHexFromColor = {this.getHexFromColor}
+                                getHexFromColor={this.getHexFromColor}
                             />
                         </div>
                     </div>
                     <div className="footer">
-                        <Dropdown
-                            className="cogIcon"
-                            icon='cog'
-                            upward={true}
-                        >
-                            <Dropdown.Menu>
-                                <Dropdown.Header
-                                    content="Selecteer end-point"
-                                />
-                                <Dropdown.Divider
-                                />
-                                {options.map((option) => (
-                                    <Dropdown.Item
-                                        className="dropDownItem"
-                                        key={option.value} {...option}
-                                        active={this.state.currentSelected === option.value}
-                                        onClick={this.dropDownSelector}
-                                    />
-                                ))}
-                            </Dropdown.Menu>
-                        </Dropdown>
+                        {gearIcon}
                         <a href="https://zakelijk.kadaster.nl/brt" target="_blank" rel="noreferrer noopener">Lees meer
                             over de Basisregistratie Topografie (BRT)</a>
                     </div>
                 </div>
-                <div className={className} onContextMenu={(e)=> e.preventDefault()}>
+                <div className={className} onContextMenu={(e) => e.preventDefault()}>
                     <Loader
                         loading={this.state.updateIng}
                     />
                     <div id="map"/>
                 </div>
                 <ContextMenu
-                    coordinates = {this.state.clickedOnLayeredMap}
-                    resetCoordinates = {this.resetClickedOnLayeredMap}
-                    objectsOverLayedOnMap = {this.state.objectsOverLayedOnMap}
-                    getHexFromColor = {this.getHexFromColor}
+                    coordinates={this.state.clickedOnLayeredMap}
+                    resetCoordinates={this.resetClickedOnLayeredMap}
+                    objectsOverLayedOnMap={this.state.objectsOverLayedOnMap}
+                    getHexFromColor={this.getHexFromColor}
                 />
             </section>
         )

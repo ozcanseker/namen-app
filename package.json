@@ -2,17 +2,18 @@
   "name": "namen_app",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://labs.kadaster.nl/demonstrators/namen-app/",
+  "homepage": "https://labs.kadaster.nl/namen-app/",
   "dependencies": {
     "@turf/turf": "^5.1.6",
-    "leaflet": "^1.5.1",
+    "leaflet": "^1.6.0",
     "leaflet.marker.highlight": "0.0.3",
     "leaflet.markercluster": "^1.4.1",
+    "lodash": "^4.17.15",
     "node-fetch": "^2.6.0",
     "node-sass": "^4.13.0",
     "point-in-geopolygon": "^1.0.1",
-    "react": "^16.10.2",
-    "react-dom": "^16.10.2",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.2.0",
     "react-spinners": "^0.6.1",
@@ -43,6 +44,7 @@
     ]
   },
   "devDependencies": {
-    "gh-pages": "^2.1.1"
+    "gh-pages": "^2.1.1",
+    "worker-loader": "^2.0.0"
   }
 }
