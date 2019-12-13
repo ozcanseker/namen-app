@@ -694,7 +694,7 @@ class App extends React.Component {
     setResFromOutside = (res, isRightClick) => {
         this.state.updateIng = false;
 
-        if(isRightClick === undefined){
+        if(isRightClick){
             this.state.results.setDoubleResults(res);
         }else{
             this.state.results.setResults(res)

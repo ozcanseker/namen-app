@@ -352,7 +352,7 @@ export function clusterObjects(res, text, setMethod) {
                     res = bringExactNameToFront(text, res);
                 }
 
-                setMethod(res, text !== undefined);
+                setMethod(res, text === undefined);
             }
         };
 
