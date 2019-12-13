@@ -291,7 +291,7 @@ let worker;
 let latestString;
 
 export function clusterObjects(res, text, setMethod) {
-    if (window.Worker) {
+    if (window.Worker ) {
         latestString = text;
 
         if (!worker) {
@@ -329,14 +329,20 @@ export function clusterObjects(res, text, setMethod) {
                         )
                     });
 
-                    return new ClusterObject(
-                        res._naam,
-                        res._type,
-                        res._geoJson,
-                        values,
-                        res._color,
-                        res._objectClass
-                    );
+                    if(values.length > 1){
+                        return new ClusterObject(
+                            res._naam,
+                            res._type,
+                            res._geoJson,
+                            values,
+                            res._color,
+                            res._objectClass
+                        );
+                    }else{
+                        return values[0];
+                    }
+
+
 
                 });
 
@@ -396,28 +402,33 @@ export function clusterObjects(res, text, setMethod) {
         let clusters = [];
 
         clusterMap.forEach(value => {
-            let first = value[0];
-            let geoJSON = [];
+            if(value.length > 1){
+                let first = value[0];
+                let geoJSON = [];
 
-            value.forEach(res => {
-                let geo;
+                value.forEach(res => {
+                    let geo;
 
-                if (res.getGeoJson().type !== "Polygon") {
-                    geo = turf.buffer(res.getGeoJson(), 0.0001).geometry;
-                } else {
-                    geo = res.getGeoJson();
-                }
-
-                geoJSON.push({
-                        type: 'Feature',
-                        geometry: geo
+                    if (res.getGeoJson().type !== "Polygon") {
+                        geo = turf.buffer(res.getGeoJson(), 0.0001).geometry;
+                    } else {
+                        geo = res.getGeoJson();
                     }
-                )
-            });
 
-            geoJSON = turf.union(...geoJSON).geometry;
+                    geoJSON.push({
+                            type: 'Feature',
+                            geometry: geo
+                        }
+                    )
+                });
 
-            clusters.push(new ClusterObject(first.getNaam(), first.getType(), geoJSON, value, first.getColor(), first.getObjectClass()));
+                geoJSON = turf.union(...geoJSON).geometry;
+
+                clusters.push(new ClusterObject(first.getNaam(), first.getType(), geoJSON, value, first.getColor(), first.getObjectClass()));
+            }else{
+                clusters.push(value[0])
+            }
+
         });
 
         return bringExactNameToFront(text, clusters.concat(res));
