@@ -26,7 +26,8 @@ class StartScreen extends React.Component {
                         én
                         als object in de kaart hiernaast. Je vindt namen die exact gelijk zijn aan je zoekterm, maar
                         ook namen die je zoekterm bevatten. Wil je alleen exact zoeken, zet je zoekterm dan tussen “”.
-                        Het maximumaantal resultaten is 990.
+                        Hou er wel rekening mee dat het bij veel voorkomende namen
+                        even kan duren voor alle objecten in beeld verschijnen.
                     </li>
                     <li>
                         Of klik met je rechtermuisknop in de kaart (bij een aanraakscherm je vinger twee seconden op de
