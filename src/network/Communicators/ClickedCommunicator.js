@@ -5,15 +5,19 @@ import {clusterObjects, sortByGeoMetryAndName} from "../ProcessorMethods";
 
 /**
  * Haalt dingen op aan de hand van de gegeven coordinaten.
- * @param lat
- * @param long
- * @param top
- * @param left
- * @param bottom
- * @param right
- * @returns {Promise<string|[]>}
+ *
+ * @param lat waar geklikt is
+ * @param long waar geklikt is
+ * @param top van de kaart frame
+ * @param left van de kaart frame
+ * @param bottom van de kaart frame
+ * @param right van de kaart frame
+ * @param setResFromOutside met deze methode kan je de resultaten van buiten de app zetten. Je moet wel "waiting" als string
+ * terug geven.
+ * @returns {Promise<string|[]>} of een string met "error" of "waiting". Of een array met res. Kan ook undefined.
  */
 export async function getFromCoordinates(lat, long, top, left, bottom, right, setResFromOutside) {
+    //check of de gebruiker te ver is uitgezoomd. Zet dan je eigen coordinaten.
     if (right - left > 0.05 || top - bottom > 0.0300) {
         left = long - 0.025;
         right = long + 0.025;
@@ -21,13 +25,7 @@ export async function getFromCoordinates(lat, long, top, left, bottom, right, se
         bottom = lat - 0.01500;
     }
 
-    let factor = 0.33;
-
-    let stop = lat - ((top-bottom)/2) * factor;
-    let sbottom = lat + ((top-bottom)/2) * factor;
-    let sright = long + ((right-left)/2) * factor;
-    let sleft = long - ((right-left)/2) * factor;
-
+    //haal alle niet straten op.
     let nonstreets = await queryTriply(queryForCoordinatesNonStreets(top, left, bottom, right));
 
     if (nonstreets.status > 300) {
@@ -39,6 +37,14 @@ export async function getFromCoordinates(lat, long, top, left, bottom, right, se
     nonstreets = await nonstreets.text();
     nonstreets = await makeSearchScreenResults(JSON.parse(nonstreets));
 
+    //De straten worden in een kleinere straal opgehaald dus doe hier de berekeningen.
+    let factor = 0.33;
+
+    let stop = lat - ((top - bottom) / 2) * factor;
+    let sbottom = lat + ((top - bottom) / 2) * factor;
+    let sright = long + ((right - left) / 2) * factor;
+    let sleft = long - ((right - left) / 2) * factor;
+
     let streets = await queryTriply(queryForCoordinatesStreets(stop, sleft, sbottom, sright));
     if (streets.status > 300) {
         //bij een network error de string error
@@ -49,12 +55,13 @@ export async function getFromCoordinates(lat, long, top, left, bottom, right, se
     streets = await streets.text();
     streets = await makeSearchScreenResults(JSON.parse(streets));
 
+    //voeg de resultaten samen en cluster de waterlopen en straten.
     nonstreets = mergeResults(streets, nonstreets);
     return clusterObjects(nonstreets, undefined, setResFromOutside);
 }
 
 /**
- * Voeg resultaten samen
+ * Voeg resultaten samen door de uris met elkaar te vergelijken.
  * @param exact
  * @param regex
  * @returns {any[] | string}
@@ -88,8 +95,8 @@ async function makeSearchScreenResults(results) {
     let res = await queryTriply(queryBetterForType(string));
 
     if (res.status > 300) {
-        //bij een network error de string error
-        return "error";
+        //bij een network error, lege array
+        return [];
     }
 
     //verwerk de query
@@ -97,8 +104,8 @@ async function makeSearchScreenResults(results) {
     res = JSON.parse(res);
     res = res.results.bindings;
 
-    // de query zorgt ervoor dat meerdere keren hetzelfde object wordt terug gegeven. Hierdoor moet je ze bij elkaar rapen
-    //De key voor de map is de linked data url
+    // De query zorgt ervoor dat meerdere keren hetzelfde object wordt terug gegeven. Hierdoor moet je ze bij elkaar rapen
+    // De key voor de map is de linked data url
     let map = new Map();
 
     for (let i = 0; i < res.length; i++) {
@@ -118,13 +125,13 @@ async function makeSearchScreenResults(results) {
         let naam, type, geoJson, color, objectClass;
 
         //dit sorteert de resultaten op gemeomety en dan naam.
-        //dus groot eerst
+        //dus bijv Polygoon voor linestring
         sortByGeoMetryAndName(valueMap);
 
         let fO = valueMap[0];
 
+        //Kijk eerst of het een brug of etc naam is.
         if (fO.brugnaam || fO.tunnelnaam || fO.sluisnaam || fO.knooppuntnaam) {
-            //staat zo want de naam moet verandert worden.
             if (fO.brugnaam) {
                 naam = fO.brugnaam.value;
             } else if (fO.tunnelnaam) {
@@ -136,12 +143,16 @@ async function makeSearchScreenResults(results) {
             }
 
             naam = naam.replace(/\|/g, "");
+            //anders off naam eerst
+        } else if (fO.offnaam) {
+            naam = fO.offnaam.value;
+            //anders friese naam eerst
         } else if (fO.naamFries) {
-            //kijk of het resultaat niet undefined is. Kijk ook of het gezochte string een deel van de naam bevat.
-            //Dit heb je nodig want bijvoorbeeld bij frieze namen moet de applicatie de frieze naam laten zien.
             naam = fO.naamFries.value;
+            //anders naam nl eerst
         } else if (fO.naamNl) {
             naam = fO.naamNl.value;
+            //anders de gewone naam eerst
         } else if (fO.naam) {
             naam = fO.naam.value;
         }
@@ -150,21 +161,28 @@ async function makeSearchScreenResults(results) {
         if (fO.type !== undefined) {
             let indexes = [];
 
-            //sorteer dit op basis van relevantie.
+            //Raap eerst alle types bij elkaar
+            //krijg dan de stipped url en dan de meest speciefieke type
+            //Dus Sporthal komt voor Gebouw want Sporthal is specefieker.
             for (let j = 0; j < valueMap.length; j++) {
                 let value = PreProcessor.stripUrlToType(valueMap[j].type.value);
                 let index = PreProcessor.getIndexOfClasses(value);
                 indexes.push({index: index, type: value});
             }
 
+            //sorteer daarna op of welke het meest speciefiek is.
             indexes.sort((a, b) => {
                 return a.index - b.index;
             });
 
+            //pak de meest speciefieke als type
             let value = indexes[0].type;
             type = PreProcessor.seperateUpperCase(value);
+
+            //De minst speciefieke wordt de object klasse.
             objectClass = PreProcessor.seperateUpperCase(indexes[indexes.length - 1].type);
 
+            //pak een kleur op basis van het type.
             color = PreProcessor.getColor(indexes[indexes.length - 1].type);
         }
 
@@ -174,6 +192,7 @@ async function makeSearchScreenResults(results) {
             geoJson = wellKnown.parse(wktJson);
         }
 
+        //maak een Resultaat object en push deze naar de array.
         let resultaatObj = new Resultaat(key, naam, type, geoJson, color, objectClass);
         returnObject.push(resultaatObj);
     });
@@ -181,6 +200,11 @@ async function makeSearchScreenResults(results) {
     return returnObject;
 }
 
+/**
+ * Dit is een methode die het sparql endpoint van triply queriet.
+ * @param query string met query
+ * @returns {Promise<Response>}
+ */
 async function queryTriply(query) {
     return await fetch("https://api.labs.kadaster.nl/datasets/kadaster/brt/services/brt/sparql", {
         method: 'POST',
@@ -192,6 +216,11 @@ async function queryTriply(query) {
     });
 }
 
+/**
+ * Query die heel veel values in één keer ophaalt.
+ * @param values
+ * @returns {string}
+ */
 function queryBetterForType(values) {
     return `
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -212,11 +241,20 @@ function queryBetterForType(values) {
   Optional{?s brt:sluisnaam ?sluisnaam.}.
   Optional{?s brt:tunnelnaam ?tunnelnaam}.
   Optional{?s brt:brugnaam ?brugnaam.}.
+  Optional{?s brt:naamOfficieel ?offnaam.}.
   Optional{?s geo:hasGeometry/geo:asWKT ?wktJson}.
   }
 `
 }
 
+/**
+ * Query die aan de hand van coordinaten niet straten ophaalt.
+ * @param top
+ * @param left
+ * @param bottom
+ * @param righ
+ * @returns {string}
+ */
 function queryForCoordinatesNonStreets(top, left, bottom, righ) {
     return `PREFIX geo: <http://www.opengis.net/ont/geosparql#>
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
@@ -245,6 +283,14 @@ function queryForCoordinatesNonStreets(top, left, bottom, righ) {
             `
 }
 
+/**
+ * Query die aan de hand van coordinaten straten ophaalt.
+ * @param top
+ * @param left
+ * @param bottom
+ * @param righ
+ * @returns {string}
+ */
 function queryForCoordinatesStreets(top, left, bottom, righ) {
     return `PREFIX geo: <http://www.opengis.net/ont/geosparql#>
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
