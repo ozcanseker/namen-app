@@ -22,6 +22,7 @@ class ResultatenHouder extends Observable {
 
         this._clickedCluster = clickedCluster;
         this._clickedCluster.subscribe(this);
+
         this.updateSubscribers();
     }
 
@@ -32,10 +33,9 @@ class ResultatenHouder extends Observable {
     clearClickedCluster(){
         if(this._clickedCluster){
             this._clickedCluster.unsubscribe(this);
+            this._clickedCluster = undefined;
+            this.updateSubscribers();
         }
-
-        this._clickedCluster = undefined;
-        this.updateSubscribers();
     }
 
     /**
@@ -43,6 +43,10 @@ class ResultatenHouder extends Observable {
      * @param clicked
      */
     setClickedResult(clicked) {
+        if(this._clickedResult){
+            this._clickedResult.unsubscribe(this);
+        }
+
         this._clickedResult = clicked;
         this._clickedResult.subscribe(this);
         this.updateSubscribers();
@@ -67,29 +71,29 @@ class ResultatenHouder extends Observable {
      * Clear alle resultaten en unsubscribe van all deze
      */
     clearAll() {
+        //geklikt resultaat
         if (this._clickedResult) {
             this._clickedResult.unsubscribe(this);
             this._clickedResult = undefined;
         }
 
+        //geklikte cluster
+        if(this._clickedCluster){
+            this._clickedCluster.unsubscribe(this);
+            this._clickedCluster = undefined;
+        }
+
+        //gezochte resultaten
         this._results.forEach(res => {
             res.unsubscribe(this);
         });
-
         this._results = [];
 
+        //rechts gezochte resultaten.
         this._rightClickedResults.forEach(res => {
             res.unsubscribe(this);
         });
-
         this._rightClickedResults = [];
-
-
-        if(this._clickedCluster){
-            this._clickedCluster.unsubscribe(this);
-        }
-
-        this._clickedCluster = undefined;
 
         this.updateSubscribers();
     }
@@ -180,7 +184,7 @@ class ResultatenHouder extends Observable {
 
         this._results.forEach(res => {
             if (res instanceof ClusterObject) {
-                geojson = geojson.concat(res.getAsFeature());
+                geojson.push(res.getAsFeature());
             } else if (res.getGeoJson()) {
                 geojson.push(res.getAsFeature());
             }
@@ -196,7 +200,7 @@ class ResultatenHouder extends Observable {
 
         this._rightClickedResults.forEach(res => {
             if (res instanceof ClusterObject) {
-                geojson = geojson.concat(res.getAsFeature());
+                geojson.push(res.getAsFeature());
             }else if (res.getGeoJson() && isShownClickedResults(res)) {
                 geojson.push(res.getAsFeature());
             }

@@ -2,7 +2,7 @@ import React from 'react';
 import {Route, Switch} from 'react-router-dom';
 
 /**
- * De bar met <-- terug.
+ * De bar met <-- terug en het aantal zoekresultaten.
  */
 class NavBar extends React.Component{
     render() {
