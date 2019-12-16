@@ -17,10 +17,14 @@ let latestString = "";
  * Je zal een string krijgen die door de gebruiker ingetypte search query bevat.
  *
  * @param text de geschreven text.
+ * @param url
+ * @param setResFromOutside de methode om res van buitenaf te zetten. Dit is bijvoorbeeld handig met het clusteren. Je
+ * moet wel "waiting" teruggeven als string als je dit wilt gebruiken.
  * @returns {Promise<string|undefined>} Undefined wanneer de fetch request veroudert is en een array met Resultaat.js als
  * de query nog niet veroudert is, Kan ook de string "error" terug krijgen. Dit is wanneer er een netwerk error is.
  */
 export async function getMatch(text, url, setResFromOutside) {
+    //check of de gebruiker een exact only querie heeft geschreven.
     let isExactMatch = text.match(/".*"/);
     text = text.replace(/"/g, "");
 
@@ -28,7 +32,7 @@ export async function getMatch(text, url, setResFromOutside) {
     latestString = text;
 
     //doe hierna 2 queries. Eentje voor exacte match
-    let exactMatch = await queryTriply(nameQueryExactMatch(firstLetterCapital(text)), url);
+    let exactMatch = await queryEndpoint(nameQueryExactMatch(firstLetterCapital(text)), url);
 
     //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
     if (latestString !== text) {
@@ -42,13 +46,15 @@ export async function getMatch(text, url, setResFromOutside) {
     exactMatch = await exactMatch.text();
     exactMatch = await makeSearchScreenResults(JSON.parse(exactMatch), url);
 
+    //als de gebruiker alleen een exact querie wou, dan eindigt het hier.
     if (isExactMatch) {
         return clusterObjects(exactMatch, text, setResFromOutside);
     }
 
     //Doe hierna nog een query voor dingen die op de ingetypte string lijken.
-    let result = await queryTriply(nameQueryForRegexMatch(text), url);
+    let result = await queryEndpoint(nameQueryForRegexMatch(text), url);
 
+    //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
     if (latestString !== text) {
         return undefined;
     } else if (result.status > 300) {
@@ -62,6 +68,7 @@ export async function getMatch(text, url, setResFromOutside) {
     //voeg de arrays samen.
     let res = mergeResults(exactMatch, result);
 
+    //cluster ze en stuur ze terug.
     return clusterObjects(res, text, setResFromOutside);
 }
 
@@ -81,7 +88,7 @@ export async function getAllAttribtes(clickedRes, endpointurl) {
      */
     let url = clickedRes.getUrl();
 
-    let res = await queryTriply(allAttributesFromUrl(url), endpointurl);
+    let res = await queryEndpoint(allAttributesFromUrl(url), endpointurl);
     res = await res.text();
     res = JSON.parse(res);
 
@@ -89,7 +96,7 @@ export async function getAllAttribtes(clickedRes, endpointurl) {
 }
 
 /**
- * maakt van een lijst van Result.js objecten uit de sparql query.
+ * Maakt een lijst van Resultaat.js objecten uit de sparql query.
  * @param results
  * @param url
  * @returns {[]}
@@ -106,12 +113,11 @@ async function makeSearchScreenResults(results, url) {
         string += `<${results[i].sub.value}>`;
     }
 
-    let res = await queryTriply(queryBetterForType(string), url);
+    let res = await queryEndpoint(queryBetterForType(string), url);
 
-    //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
+    //bij een network
     if (res.status > 300) {
-        //bij een network error de string error
-        return "error";
+        return [];
     }
 
     res = await res.text();
@@ -121,7 +127,7 @@ async function makeSearchScreenResults(results, url) {
 }
 
 /**
- * Voeg resultaten samen
+ * Voeg resultaten samen op basis van uri
  * @param exact
  * @param regex
  * @returns {any[] | string}
@@ -137,7 +143,13 @@ function mergeResults(exact, regex) {
     return exact.concat(regex);
 }
 
-export async function queryTriply(query, url) {
+/**
+ * Methode om sparql endpoint te querien
+ * @param query
+ * @param url
+ * @returns {Promise<Response>}
+ */
+export async function queryEndpoint(query, url) {
     return await fetch(url, {
         method: 'POST',
         headers: {
@@ -149,6 +161,11 @@ export async function queryTriply(query, url) {
 
 }
 
+/**
+ * Query om alle exacte matches op te halen
+ * @param query
+ * @returns {string}
+ */
 function nameQueryExactMatch(query) {
     return `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -161,6 +178,11 @@ function nameQueryExactMatch(query) {
 `
 }
 
+/**
+ * Query om all regex matches op te halen.
+ * @param queryString
+ * @returns {string}
+ */
 function nameQueryForRegexMatch(queryString) {
     return `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -175,6 +197,11 @@ function nameQueryForRegexMatch(queryString) {
             `
 }
 
+/**
+ * Query om alle type en overige attributen op te halen van de eerder opgehaalde resultaten.
+ * @param values
+ * @returns {string}
+ */
 export function queryBetterForType(values) {
     return `
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -201,6 +228,11 @@ export function queryBetterForType(values) {
 `
 }
 
+/**
+ * Haal alle attributen van een object op.
+ * @param namedNode
+ * @returns {string}
+ */
 function allAttributesFromUrl(namedNode) {
     return `PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>

@@ -9,6 +9,7 @@ class Routes extends React.Component {
     render() {
         let router2;
 
+        //kijk eerst of er een clicked cluster is.
         if(this.props.res.getClickedCluster()){
             router2 = (<Route
                 exact path="/result/:id"

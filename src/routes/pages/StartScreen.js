@@ -1,5 +1,8 @@
 import React from 'react';
 
+/**
+ * Start scherm met de stuk tekst.
+ */
 class StartScreen extends React.Component {
     render() {
         return (

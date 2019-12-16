@@ -1,3 +1,7 @@
+/**
+ * Dit is de class die verschillende endpoints kan bevragen. Als je maar één endpoint hebt raad ik het aan om alle logica
+ * voor de communicatie hier te implementeren. De rest kan je verwijderen.
+ */
 import * as CommunicatorSPARQL from './Communicators/CommunicatorSPARQL';
 import * as ClickedCommunicator from './Communicators/ClickedCommunicator';
 import * as CommunicatorELASTICSEARCH from "./Communicators/CommunicatorELASTICSEARCH";
@@ -12,20 +16,20 @@ const pdokURL = "https://data.pdok.nl/sparql";
 let latestString = "";
 
 /**
- * Laatste methode waarop is gezocht
+ * Laatste methode waarmee is gezocht
  * @type {string}
  */
 let latestMethod = "";
 
 /**
- * Geeft de options voor backends terug
- * @returns {({description: string, text: string, value: string}|{description: string, text: string, value: string})[]}
+ * Geeft de options voor backends terug, als er maar één optie wordt meegegeven wordt de tandwiel linksonder niet meer getoond.
+ * @returns {[{description: string, text: string, value: string}]}
  */
-export function getOptions(){
+export function getOptions() {
     return [
-        { value: 'tsp', text: 'Kadaster Labs SPARQL', description : "snel"},
-        { value: 'psp', text: 'PDOK SPARQL', description : "meest actueel"},
-        { value: 'tes', text: 'Kadaster Labs Elasticsearch', description : "snelste"},
+        {value: 'tsp', text: 'Kadaster Labs SPARQL', description: "snel"},
+        {value: 'psp', text: 'PDOK SPARQL', description: "meest actueel"},
+        {value: 'tes', text: 'Kadaster Labs Elasticsearch', description: "snelste"},
     ];
 }
 
@@ -33,7 +37,8 @@ export function getOptions(){
  * Deze wordt aangeroepen wanneer de gebruiker iets in het zoekveld typt
  *
  * @param text: gezochte tekst
- * @param method:  de methode waarmee is gezocht
+ * @param method: de methode waarmee is gezocht
+ * @param setResFromOutside methode om vanaf de buitenkant de resultaat te zetten.
  * @returns {Promise<string|undefined>}
  */
 export async function getMatch(text, method, setResFromOutside) {
@@ -41,17 +46,19 @@ export async function getMatch(text, method, setResFromOutside) {
     latestMethod = method;
     let res;
 
-    if(method === "tsp"){
+    //query op basis van de methode die de gebruiker gespecificeerd heeft.
+    if (method === "tsp") {
         res = await CommunicatorSPARQL.getMatch(text, labsURL, setResFromOutside);
-    }else if(method === "psp"){
+    } else if (method === "psp") {
         res = await CommunicatorSPARQL.getMatch(text, pdokURL, setResFromOutside);
-    }else {
-        res = await CommunicatorELASTICSEARCH.getMatch(text, setResFromOutside);
+    } else {
+        res = await CommunicatorELASTICSEARCH.getMatch(text, labsURL, setResFromOutside);
     }
 
-    if((text === latestString && latestMethod === method) || res === "error"){
+    //als het of een error is en als de laatste methode en gezochte string overeenkomen. geef dan het resultaat terug.
+    if ((text === latestString && latestMethod === method) || res === "error") {
         return res;
-    }else{
+    } else {
         return undefined;
     }
 }
@@ -66,35 +73,37 @@ export async function getMatch(text, method, setResFromOutside) {
  * @returns {Promise<void>} verwacht niets terug maar moet wel de clickedRes vullen met de loadInAttributes van de ClickedRes.js
  */
 export async function getAllAttribtes(clickedRes) {
-    if(latestMethod === "tsp"){
+    if (latestMethod === "tsp") {
         await CommunicatorSPARQL.getAllAttribtes(clickedRes, labsURL);
-    }else if(latestMethod === "psp"){
+    } else if (latestMethod === "psp") {
         await CommunicatorSPARQL.getAllAttribtes(clickedRes, pdokURL);
-    }else {
+    } else {
         await CommunicatorSPARQL.getAllAttribtes(clickedRes, labsURL);
     }
 }
 
 /**
- * Deze functie wordt aangeroepen wanneer de gebruiker
+ * Deze functie wordt aangeroepen wanneer de gebruiker recht klikt op de kaart.
  *
- * @param lat
- * @param long
- * @param top
- * @param left
- * @param bottom
- * @param right
+ * @param lat de latitude van het geklikt punt
+ * @param long de longitude van het geklikt punt
+ * @param top van het kaart scherm
+ * @param left van het kaart scherm
+ * @param bottom van het kaart scherm
+ * @param right van het kaart scherm
+ * @param setResFromOutside
  * @returns {Promise<string|*[]|undefined>} Verwacht een lijst met Resultaat.js objecten terug
  */
-export async function getFromCoordinates(lat, long, top, left, bottom, right, setResFromOutside){
+export async function getFromCoordinates(lat, long, top, left, bottom, right, setResFromOutside) {
     latestString = undefined;
     latestMethod = "tsp";
 
     let res = await ClickedCommunicator.getFromCoordinates(lat, long, top, left, bottom, right, setResFromOutside);
 
-    if(latestString === undefined){
+    //als de gebruiker iets anders heeft opgezocht geef dan undefined terug.
+    if (latestString === undefined) {
         return res;
-    }else {
+    } else {
         return undefined;
     }
 }

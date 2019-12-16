@@ -1,9 +1,9 @@
 import {clusterObjects, processSearchScreenResults} from "../ProcessorMethods";
-import {queryTriply, queryBetterForType} from './CommunicatorSPARQL';
+import {queryEndpoint, queryBetterForType} from './CommunicatorSPARQL';
 
 let latestString;
 
-export async function getMatch(text, setResFromOutside) {
+export async function getMatch(text,labsURL ,setResFromOutside) {
     //update eerst de laatst ingetype string
     latestString = text;
 
@@ -20,31 +20,33 @@ export async function getMatch(text, setResFromOutside) {
     res = await res.text();
     res = JSON.parse(res);
 
-    console.log(res);
-
-    res = await makeSearchScreenResults(res);
+    res = await makeSearchScreenResults(res, labsURL);
     return clusterObjects(res, text, setResFromOutside);
 }
 
 /**
  * maakt van een lijst van Result.js objecten uit de sparql query.
  * @param results
+ * @param labsURL url van data.labs.kadaster.nl voor het sparql endpoint
  * @returns {[]}
  */
-async function makeSearchScreenResults(results) {
+async function makeSearchScreenResults(results, labsURL) {
     results = results.hits.hits;
+
+    if(results.length === 0){
+        return [];
+    }
 
     let string = "";
     for (let i = 0; i < results.length; i++) {
         string += `<${results[i]._id}>`;
     }
 
-    let res = await queryTriply(queryBetterForType(string));
+    let res = await queryEndpoint(queryBetterForType(string), labsURL);
 
-    //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
+    //bij een network error
     if (res.status > 300) {
-        //bij een network error de string error
-        return "error";
+        return [];
     }
 
     res = await res.text();
@@ -53,6 +55,11 @@ async function makeSearchScreenResults(results) {
     return processSearchScreenResults(res, latestString);
 }
 
+/**
+ * Queriet de data.labs.kadaster.nl elastic search endpoint.
+ * @param query
+ * @returns {Promise<Response>}
+ */
 async function queryESDLK(query) {
     return await fetch(`https://api.labs.kadaster.nl/datasets/kadaster/brt/services/search/search?query=${query}`, {
         method: 'GET'

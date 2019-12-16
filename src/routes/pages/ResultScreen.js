@@ -1,16 +1,21 @@
 import React from 'react';
 import Resultaat from "../../model/Resultaat";
 
+/**
+ * Dit is het scherm dat alle gevonden resultaten laat zien
+ */
 class ResultScreen extends React.Component {
     render() {
         let results;
 
+        //kijk eerst of er een cluster is of niet.
         if(this.props.res.getClickedCluster()){
             results = this.props.res.getClickedCluster().getValues();
         }else{
             results = this.props.res.getRightClickedRes().length > 0 ? this.props.res.getRightClickedRes() : this.props.res.getResults();
         }
 
+        //voor elk resultaat.
         let elements = results.map(res => {
             let pElementHoofd = (<p className= "hoofdText">&nbsp;</p>);
             let pElementSub = (<p className= "subText">&nbsp;</p>);

@@ -1,3 +1,6 @@
+/**
+ * Observable class om MVC te implementeren.
+ */
 class Observable{
     constructor() {
         this._subscribers = [];

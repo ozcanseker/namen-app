@@ -3,13 +3,12 @@ import './style/ContextMenu.scss'
 import _ from 'lodash';
 
 /**
- * Dit is het menu dat tervoorschijn komt als je op de kaart klikt met meerdere lagen.
+ * Dit is het menu dat tervoorschijn komt om de laag te selecteren waar je naar toe wilt.
  */
 class ContextMenu extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            mousedOver: false,
             widthPage: 0,
             heightPage: 0,
         }
@@ -99,9 +98,6 @@ class ContextMenu extends React.Component {
         return (<div style={myStyle}
                      className="contextMenuContainer"
                      ref={(div) => {this.div = div}}
-                     onMouseEnter={() => {
-                         this.setState({mousedOver: true})
-                     }}
                      onMouseLeave={() => {
                          this.props.resetCoordinates();
                      }}

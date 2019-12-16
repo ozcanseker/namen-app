@@ -12,6 +12,6 @@ export const Icons = new L.Icon.Default({
     shadowUrl : MarkerShadow});
 
 /**
- * Dit id de default leaflet icoon
+ * Dit is de default leaflet icoon
  */
 export const DefaultIcon = new L.Icon.Default();

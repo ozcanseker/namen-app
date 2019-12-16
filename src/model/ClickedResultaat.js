@@ -14,12 +14,12 @@ class ClickedResultaat extends Observable {
      * @param naamFries
      * @param types [] van types
      * @param overige [{key: string, value: string}] van overige attributen
-     * @param burgNaam
+     * @param brugNaam
      * @param tunnelNaam
      * @param sluisNaam
-     * @param knoopPuntNaam
+     * @param knooppuntNaam
      */
-    constructor(res, naam, naamOfficieel, naamNl, naamFries, types, overige, burgNaam, tunnelNaam, sluisNaam, knoopPuntNaam) {
+    constructor(res, naam, naamOfficieel, naamNl, naamFries, types, overige, brugNaam, tunnelNaam, sluisNaam, knooppuntNaam) {
         super();
 
         this._res = res;
@@ -27,10 +27,10 @@ class ClickedResultaat extends Observable {
         this._naamOfficieel = naamOfficieel;
         this._naamNL = naamNl;
         this._naamFries = naamFries;
-        this._brugNaam = burgNaam;
+        this._brugNaam = brugNaam;
         this._tunnelNaam = tunnelNaam;
         this._sluisNaam = sluisNaam;
-        this._knoopPuntNaam = knoopPuntNaam;
+        this._knoopPuntNaam = knooppuntNaam;
 
         //types is een array, je kan meerdere dingen toevoegen.
         if (types) {
@@ -77,22 +77,22 @@ class ClickedResultaat extends Observable {
      * @param naamfries
      * @param type [] van types
      * @param overige [{key: string, value: string}] van overige attributen
-     * @param burgNaam
+     * @param brugNaam
      * @param tunnelNaam
      * @param sluisNaam
-     * @param knoopPuntNaam
+     * @param knooppuntNaam
      */
-    loadInAttributes(naam, naamOfficieel, naamnl, naamfries, type, overige, burgNaam, tunnelNaam, sluisNaam, knoopPuntNaam) {
+    loadInAttributes(naam, naamOfficieel, naamnl, naamfries, type, overige, brugNaam, tunnelNaam, sluisNaam, knooppuntNaam) {
         this._naam = naam;
         this._naamOfficieel = naamOfficieel;
         this._naamNL = naamnl;
         this._naamFries = naamfries;
         this._types = type;
         this._overige = overige;
-        this._brugNaam = burgNaam;
+        this._brugNaam = brugNaam;
         this._tunnelNaam = tunnelNaam;
         this._sluisNaam = sluisNaam;
-        this._knoopPuntNaam = knoopPuntNaam;
+        this._knoopPuntNaam = knooppuntNaam;
 
         let url = this._res.getUrl();
         this._overige.unshift({key: "brt link", value: url});

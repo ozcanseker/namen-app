@@ -1,6 +1,17 @@
 import Observable from "./Observable";
 
+/**
+ * Dit is het object dat een waterloop of straat cluster bevat.
+ */
 class ClusterObject extends Observable{
+    /**
+     * @param naam
+     * @param type
+     * @param geoJSON van het totaal object
+     * @param values
+     * @param color
+     * @param objectClass
+     */
     constructor(naam, type,geoJSON ,values, color, objectClass){
         super();
 
@@ -64,7 +75,6 @@ class ClusterObject extends Observable{
             return res.getAsFeature();
         })
     }
-
 
     getAsFeature(){
         return  {
