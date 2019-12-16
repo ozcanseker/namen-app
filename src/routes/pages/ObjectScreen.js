@@ -1,6 +1,9 @@
 import React from 'react';
 import * as Communicator from '../../network/Communicator';
 
+/**
+ * Dit is het scherm dat het geklikte object laat zien.
+ */
 class ObjectScreen extends React.Component {
     constructor(props) {
         super(props);
@@ -26,7 +29,7 @@ class ObjectScreen extends React.Component {
                 })
             });
         }
-    }
+    };
 
     render() {
         let res = this.state.res;
@@ -61,7 +64,6 @@ class ObjectScreen extends React.Component {
             let naamNl;
             let naamFries;
             let naamOfficeel;
-            let naam2;
             let brugnaam;
             let sluisnaam;
             let knooppuntnaam;
@@ -137,7 +139,6 @@ class ObjectScreen extends React.Component {
                             {naamOfficeel}
                             {naamNl}
                             {naamFries}
-                            {naam2}
                             {tunnelnaam}
                             {brugnaam}
                             {sluisnaam}
@@ -159,10 +160,9 @@ class ObjectScreen extends React.Component {
                     <td>{res.key}</td>
                     <td>{value}</td>
                 </tr>)
-            })
+            });
 
             tableRest = (
-
                 <table className="attributeSectionObjectScreen">
                     <tbody>
                     {attributes}

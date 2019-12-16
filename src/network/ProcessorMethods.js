@@ -311,14 +311,16 @@ export function clusterObjects(res, text, setMethod) {
         }
 
         //post de res objecten naar de worker.
-        worker.postMessage(res);
+        worker.postMessage({res : res, text : text});
 
         //als de werker klaar is moet je het weer omzetten naar Javascript classen.
         worker.onmessage = (data) => {
             data = data.data;
 
+            let originalquery = data.text;
+
             //als de gebruiker niets nieuws heeft opgezocht.
-            if (text === latestString) {
+            if (originalquery === latestString) {
                 //zet alle res objecten om naar Resultaat.js objecten
                 let results = data.resultaat.map(res => {
                     return new Resultaat(
@@ -327,7 +329,7 @@ export function clusterObjects(res, text, setMethod) {
                         res._type,
                         res._geoJson,
                         res._color,
-                        res.__objectClass
+                        res._objectClass
                     )
                 });
 
