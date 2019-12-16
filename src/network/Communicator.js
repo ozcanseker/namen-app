@@ -91,6 +91,7 @@ export async function getAllAttribtes(clickedRes) {
  * @param left van het kaart scherm
  * @param bottom van het kaart scherm
  * @param right van het kaart scherm
+ * @param setResFromOutside
  * @returns {Promise<string|*[]|undefined>} Verwacht een lijst met Resultaat.js objecten terug
  */
 export async function getFromCoordinates(lat, long, top, left, bottom, right, setResFromOutside) {

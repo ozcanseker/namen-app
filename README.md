@@ -1,5 +1,5 @@
 # Brt namen app  
-Dit is een applicatie die brt objecten uit de brt haalt op basis van naam. Deze toont de applicatie hierna op de kaart.
+Dit is een applicatie die objecten uit de brt haalt op basis van naam. Deze toont de applicatie hierna op de kaart.
 
 ## Gebruikshandleiding
 De gebruiker kan op verschillende manieren data ophalen. De gebruiker kan op een naam zoeken of met de rechter muis knop op de kaart klikken.
@@ -12,13 +12,5 @@ endpoints kiezen.
 
 ## TODO's
 - Brugnamen, sluis, knooppunt en tunnelnamen worden niet meegenomen wanneer je rechts klikt op de kaart.
-
-- zoeken met plus.
-
-- types objecten
-  
-- {
-    elastic search  
-    extra versie simpel  
-    begin eind exact and or  
-  }
+- extra zoek funcitonaliteit.
+- types objecten selecteren die je terug wilt krijgen.
