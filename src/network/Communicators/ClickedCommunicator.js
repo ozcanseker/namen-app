@@ -40,10 +40,10 @@ export async function getFromCoordinates(lat, long, top, left, bottom, right, se
     //De straten worden in een kleinere straal opgehaald dus doe hier de berekeningen.
     let factor = 0.33;
 
-    let stop = lat - ((top - bottom) / 2) * factor;
-    let sbottom = lat + ((top - bottom) / 2) * factor;
-    let sright = long + ((right - left) / 2) * factor;
-    let sleft = long - ((right - left) / 2) * factor;
+    let stop = lat - 0.0022804940130103546;//((top - bottom) / 2) * factor;
+    let sbottom = lat + 0.0022804940130103546;//((top - bottom) / 2) * factor;
+    let sright = long + 0.0033634901046750002;//((right - left) / 2) * factor;
+    let sleft = long - 0.0033634901046750002;//((right - left) / 2) * factor;
 
     let streets = await queryTriply(queryForCoordinatesStreets(stop, sleft, sbottom, sright));
     if (streets.status > 300) {
