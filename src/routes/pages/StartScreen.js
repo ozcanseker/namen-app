@@ -9,7 +9,7 @@ class StartScreen extends React.Component {
             <div className="startScreen">
                 <p className="boldHeaderText">Zoek je een naam? Je vindt ‘m hier!</p>
                 <p className="explainText">
-                    In de BRT Namenzoeker kun je zoeken op alle namen die in de topografische bestanden en kaarten van
+                    In de Topo Namenzoeker kun je zoeken op alle namen die in de topografische bestanden en kaarten van
                     het Kadaster aanwezig zijn. Aardrijkskundige namen zijn onmisbaar om te beschrijven waar we zijn,
                     waar we vandaan komen en waar we naartoe gaan. In de <a href="http://www.kadaster.nl/brt"
                                                                             target="_blank" rel="noreferrer noopener">Basisregistratie
@@ -48,6 +48,12 @@ class StartScreen extends React.Component {
                     zien. Bij welk object hoort de naam, wat is de functie, hoeveel inwoners heeft je stad of dorp, wat
                     is de oppervlakte van een gebied? De antwoorden vind je hier.
                 </p>
+
+                <p className="explainText">
+                    De Basisregistratie Topografie wordt jaarlijks volledig geactualiseerd. De Topo Namenzoeker maakt
+                    gebruik van de actuele dataset van de BRT.
+                </p>
+
                 <p className="boldHeaderText">Mis je nog een naam? Meld het ons!</p>
                 <p className="explainText">
                     Via <a href="http://www.verbeterdekaart.nl/" target="_blank" rel="noreferrer noopener">Verbeter de
@@ -62,20 +68,12 @@ class StartScreen extends React.Component {
                     onze kaarten een reis door de tijd in <a href="http://www.topotijdreis.nl/" target="_blank"
                                                              rel="noreferrer noopener">Topotijdreis</a>.
                 </p>
-                <p className="boldHeaderText">Over de BRT Namenzoeker</p>
+                <p className="boldHeaderText">Over de Topo Namenzoeker</p>
                 <p className="explainText">
-                    De BRT Namenzoeker is ontwikkeld door het <a
-                    href="https://labs.kadaster.nl/" target="_blank"
-                    rel="noreferrer noopener">Kadaster Data Science Team</a> in samenwerking met het BRT
-                    Team. Het is een demonstrator gericht op de toegevoegde waarde van de BRT op het gebied van namen
-                    zichtbaar te maken, maar daarnaast heeft het ook een technische doelstelling om de (on)mogelijkheden
-                    van verschillende technische interfaces te laten zien. Met het instellingen radartje linksonder is
-                    de technische interface instelbaar. Standaard staat het ingesteld op de SPARQL interface van de
-                    Kadaster Labs omgeving, waarin een kopie van de BRT is opgenomen. Daarnaast kunt u de SPARQL
-                    interface van PDOK selecteren. Dit publieke endpoint is de publicatie bron, maar biedt mindere
-                    performance waardoor de applicatie trager wordt. Tot slot kan er ook gekozen worden voor de Elastic
-                    Search interface op Kadaster Labs; hiermee wordt “Fuzzy Search” mogelijk; betere resultaten als er
-                    een tikfout gemaakt wordt. We zien graag je reactie op de BRT Namenzoeker op het <a
+                    De Topo Namenzoeker is ontwikkeld door het Kadaster. De applicatie maakt de grote verscheidenheid
+                    aan aardrijkskundige namen in de Basisregistratie Topografie zichtbaar en toegankelijk, en laat
+                    daarnaast de technische mogelijkheden van Linked Data zien. We zien graag je reactie op de Topo
+                    Namenzoeker op het <a
                     href="https://geoforum.nl/" target="_blank"
                     rel="noreferrer noopener">Geoforum.nl</a>.
                 </p>

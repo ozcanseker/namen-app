@@ -855,7 +855,7 @@ class App extends React.Component {
                         this.handleDeleteClick();
                     }}>
                         <div className="header">
-                            <h1>BRT Namenzoeker</h1><img src={KadasterImg} alt="kadaster logo"/>
+                            <h1>Topo Namenzoeker</h1><img src={KadasterImg} alt="kadaster logo"/>
                         </div>
                     </Link>
                     <div className="searchBar">

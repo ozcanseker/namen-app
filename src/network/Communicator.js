@@ -28,8 +28,8 @@ let latestMethod = "";
 export function getOptions() {
     return [
         {value: 'tsp', text: 'Kadaster Labs SPARQL', description: "snel"},
-        {value: 'psp', text: 'PDOK SPARQL', description: "meest actueel"},
-        {value: 'tes', text: 'Kadaster Labs Elasticsearch', description: "snelste"},
+        // {value: 'psp', text: 'PDOK SPARQL', description: "meest actueel"},
+        // {value: 'tes', text: 'Kadaster Labs Elasticsearch', description: "snelste"},
     ];
 }
 
