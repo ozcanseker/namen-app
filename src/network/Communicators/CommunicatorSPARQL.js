@@ -52,7 +52,7 @@ export async function getMatch(text, url, setResFromOutside) {
     }
 
     //Doe hierna nog een query voor dingen die op de ingetypte string lijken.
-    let result = await queryEndpoint(nameQueryForRegexMatch(text), url);
+    let result = await queryEndpoint(nameQueryForRegexMatch(text, exactMatch), url);
 
     //als de gebruiker iets nieuws heeft ingetypt geef dan undefined terug.
     if (latestString !== text) {
@@ -104,7 +104,7 @@ export async function getAllAttribtes(clickedRes, endpointurl) {
 async function makeSearchScreenResults(results, url) {
     results = results.results.bindings;
 
-    if(results.length === 0){
+    if (results.length === 0) {
         return [];
     }
 
@@ -181,9 +181,17 @@ function nameQueryExactMatch(query) {
 /**
  * Query om all regex matches op te halen.
  * @param queryString
+ * @param exactvalues
  * @returns {string}
  */
-function nameQueryForRegexMatch(queryString) {
+function nameQueryForRegexMatch(queryString, exactvalues) {
+    let uris = [];
+    exactvalues.forEach(res => {
+        uris.push("<" + res.getUrl() + ">");
+    });
+
+    uris = uris.join(",");
+
     return `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
@@ -191,6 +199,7 @@ function nameQueryForRegexMatch(queryString) {
             SELECT distinct ?sub WHERE {
             { ?sub brt:naam ?label } UNION { ?sub brt:naamNL ?label } UNION {?sub brt:naamFries ?label} UNION {?sub brt:brugnaam ?label}  UNION {?sub brt:tunnelnaam ?label} UNION {?sub brt:sluisnaam ?label} UNION {?sub brt:knooppuntnaam ?label} UNION {?sub brt:naamOfficieel ?label}.
               
+              filter( ?sub not IN(${uris})).
               FILTER(REGEX(?label, "${queryString}", "i")).
             }
             LIMIT 1000
