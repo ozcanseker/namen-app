@@ -12,6 +12,7 @@ import * as wellKnown from "wellknown";
 import Resultaat from "../model/Resultaat";
 import * as turf from "@turf/turf";
 import ClusterObject from "../model/ClusterObject";
+import {toastMax} from "../components/toastMethods";
 
 /**
  * Een file die alle classen van de brt bevat. Object klassen staan achter aan.
@@ -299,7 +300,7 @@ let latestString;
  * @param setMethod de methode om de resultaten te zettten.
  * @returns {string|[]}
  */
-export function clusterObjects(res, text, setMethod) {
+export function clusterObjects(res, text, setMethod, isMax) {
     //kijk eerst of de webbrowser een webworker heeft. Anders doe het in de ui thread.
     if (window.Worker) {
         //laatste string waarop is gezocht.
@@ -311,13 +312,14 @@ export function clusterObjects(res, text, setMethod) {
         }
 
         //post de res objecten naar de worker.
-        worker.postMessage({res : res, text : text});
+        worker.postMessage({res : res, text : text, isMax: isMax});
 
         //als de werker klaar is moet je het weer omzetten naar Javascript classen.
         worker.onmessage = (data) => {
             data = data.data;
 
             let originalquery = data.text;
+            let isMax = data.isMax;
 
             //als de gebruiker niets nieuws heeft opgezocht.
             if (originalquery === latestString) {
@@ -367,6 +369,10 @@ export function clusterObjects(res, text, setMethod) {
                 if (text !== undefined) {
                     //sorteer het nog even zodat exacte resultaten naar voren komen.
                     res = bringExactNameToFront(text, res);
+                }
+
+                if(isMax){
+                    toastMax();
                 }
 
                 //zet de res van buiten.
@@ -466,6 +472,10 @@ export function clusterObjects(res, text, setMethod) {
                 clusters.push(value[0])
             }
         });
+
+        if(isMax){
+            toastMax();
+        }
 
         //haal alle exacte namen naar voren.
         return bringExactNameToFront(text, clusters.concat(res));

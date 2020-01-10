@@ -26,6 +26,8 @@ let latestString = "";
 export async function getMatch(text, url, setResFromOutside) {
     //check of de gebruiker een exact only querie heeft geschreven.
     let isExactMatch = text.match(/".*"/);
+    let isMax = false;
+
     text = text.replace(/"/g, "");
 
     //update eerst de laatst ingetype string
@@ -44,7 +46,13 @@ export async function getMatch(text, url, setResFromOutside) {
 
     //zet deze om in een array met Resultaat.js
     exactMatch = await exactMatch.text();
-    exactMatch = await makeSearchScreenResults(JSON.parse(exactMatch), url);
+    exactMatch = JSON.parse(exactMatch);
+
+    if(exactMatch.results.bindings.length === 4000){
+        isMax = true;
+    }
+
+    exactMatch = await makeSearchScreenResults(exactMatch, url);
 
     //als de gebruiker alleen een exact querie wou, dan eindigt het hier.
     if (isExactMatch) {
@@ -69,7 +77,7 @@ export async function getMatch(text, url, setResFromOutside) {
     let res = mergeResults(exactMatch, result);
 
     //cluster ze en stuur ze terug.
-    return clusterObjects(res, text, setResFromOutside);
+    return clusterObjects(res, text, setResFromOutside, isMax);
 }
 
 /**
@@ -107,6 +115,8 @@ async function makeSearchScreenResults(results, url) {
     if (results.length === 0) {
         return [];
     }
+
+    console.log(results.length);
 
     let string = "";
     for (let i = 0; i < results.length; i++) {
