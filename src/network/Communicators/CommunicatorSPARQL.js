@@ -116,8 +116,6 @@ async function makeSearchScreenResults(results, url) {
         return [];
     }
 
-    console.log(results.length);
-
     let string = "";
     for (let i = 0; i < results.length; i++) {
         string += `<${results[i].sub.value}>`;

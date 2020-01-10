@@ -106,7 +106,7 @@ class App extends React.Component {
         }).addTo(this.map);
 
         //de groep voor de markers
-        // this.markerGroup = L.featureGroup().addTo(this.map);
+        this.isClusteredMarkerGroup = true;
         this.markerGroup = L.markerClusterGroup({
             showCoverageOnHover: false
         });
@@ -119,8 +119,35 @@ class App extends React.Component {
             }
         });
 
+        this.map.on('zoomend', this.controlZoom);
+
         //versiebeheer
-        console.log("version 1.2.0");
+        console.log("version 1.2.1");
+    };
+
+    controlZoom = (a, b, c) => {
+        let zoom = this.map.getZoom();
+
+        if(zoom < 10 && !this.isClusteredMarkerGroup){
+            this.isClusteredMarkerGroup = true;
+
+            this.map.removeLayer(this.markerGroup);
+
+            this.markerGroup = L.markerClusterGroup({
+                showCoverageOnHover: false
+            });
+            this.map.addLayer(this.markerGroup);
+
+            this.update();
+        }else if(zoom >= 10 && this.isClusteredMarkerGroup){
+            this.isClusteredMarkerGroup = false;
+
+            this.map.removeLayer(this.markerGroup);
+
+            this.markerGroup = L.featureGroup().addTo(this.map);
+
+            this.update();
+        }
     };
 
     /**
