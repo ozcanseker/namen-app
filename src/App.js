@@ -6,6 +6,7 @@ import React from 'react';
 import * as turf from '@turf/turf';
 import * as inside from "point-in-geopolygon";
 import _ from 'lodash';
+import 'leaflet.markercluster';
 
 /**
  * UI
@@ -20,6 +21,8 @@ import Loader from "./components/Loader";
  */
 import './App.css';
 import KadasterImg from './assets/Logo-kadaster.png';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 /**
  * Netwerk
@@ -100,7 +103,11 @@ class App extends React.Component {
         }).addTo(this.map);
 
         //de groep voor de markers
-        this.markerGroup = L.featureGroup().addTo(this.map);
+        // this.markerGroup = L.featureGroup().addTo(this.map);
+        this.markerGroup = L.markerClusterGroup({
+            showCoverageOnHover: false
+        });
+        this.map.addLayer(this.markerGroup);
 
         //dit is voor mobiele applicatie. Als er gesleept wordt sluit dan het context menu.
         this.map.on('dragstart', () => {
@@ -110,7 +117,7 @@ class App extends React.Component {
         });
 
         //versiebeheer
-        console.log("version 1.1.0");
+        console.log("version 1.2.0");
     };
 
     /**
