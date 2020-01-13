@@ -6,6 +6,10 @@ import React from 'react';
 import * as turf from '@turf/turf';
 import * as inside from "point-in-geopolygon";
 import _ from 'lodash';
+import 'leaflet.markercluster';
+
+import {toast, ToastContainer} from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 /**
  * UI
@@ -20,6 +24,8 @@ import Loader from "./components/Loader";
  */
 import './App.css';
 import KadasterImg from './assets/Logo-kadaster.png';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 /**
  * Netwerk
@@ -100,7 +106,11 @@ class App extends React.Component {
         }).addTo(this.map);
 
         //de groep voor de markers
-        this.markerGroup = L.featureGroup().addTo(this.map);
+        this.isClusteredMarkerGroup = true;
+        this.markerGroup = L.markerClusterGroup({
+            showCoverageOnHover: false
+        });
+        this.map.addLayer(this.markerGroup);
 
         //dit is voor mobiele applicatie. Als er gesleept wordt sluit dan het context menu.
         this.map.on('dragstart', () => {
@@ -109,8 +119,35 @@ class App extends React.Component {
             }
         });
 
+        this.map.on('zoomend', this.controlZoom);
+
         //versiebeheer
-        console.log("version 1.1.0");
+        console.log("version 1.2.1");
+    };
+
+    controlZoom = (a, b, c) => {
+        let zoom = this.map.getZoom();
+
+        if(zoom < 10 && !this.isClusteredMarkerGroup){
+            this.isClusteredMarkerGroup = true;
+
+            this.map.removeLayer(this.markerGroup);
+
+            this.markerGroup = L.markerClusterGroup({
+                showCoverageOnHover: false
+            });
+            this.map.addLayer(this.markerGroup);
+
+            this.update();
+        }else if(zoom >= 10 && this.isClusteredMarkerGroup){
+            this.isClusteredMarkerGroup = false;
+
+            this.map.removeLayer(this.markerGroup);
+
+            this.markerGroup = L.featureGroup().addTo(this.map);
+
+            this.update();
+        }
     };
 
     /**
@@ -228,7 +265,49 @@ class App extends React.Component {
      **/
     addMarker = (feature, latlng) => {
         //maake en marker aan
-        let marker = L.marker(latlng,);
+        let marker = L.marker(latlng);
+        this.markerGroup.addLayer(marker);
+
+        //dit is de pop up en de html die tevoorschijn komt.
+        marker.bindPopup(`<div class = "marker">
+                    <b>${feature.properties.getNaam()}</b>
+                    <br/>
+                    <span class = "subTextMarker" style="color:${this.getHexFromColor(feature.properties.getColor(), true)};">${feature.properties.getType()}</span><div>
+            `, {
+            autoPan: false,
+            closeButton: false
+        });
+
+        //methode die worden aangeroepen om de marker te openen
+        let onHover = function (e) {
+            this.openPopup();
+            this.setIcon(Icons);
+        }.bind(marker);
+
+        //methode die wordt aangeroepen om de marker te sluiten
+        let onHoverOff = function (e) {
+            this.closePopup();
+            this.setIcon(DefaultIcon);
+        }.bind(marker);
+
+        //wanneer je over de marker gaat laat de pop up zien
+        marker.on('mouseover', onHover);
+        //geef deze ook aan de feature zodat wanneer je over de resultaten lijst gaat het ook op de kaart te zien is.
+        feature.properties._setOnHover(onHover);
+
+        //wanneer je er van af gaat laat het weg
+        marker.on('mouseout', onHoverOff);
+        feature.properties._setOnHoverOff(onHoverOff);
+
+        //wanneer je er op klikt ga naar die marker
+        marker.on('click', () => {
+            this.onClickItem(feature.properties)
+        });
+    };
+
+    makeMarker = (feature, latlng) => {
+        //maake en marker aan
+        let marker = L.marker(latlng);
 
         //dit is de pop up en de html die tevoorschijn komt.
         marker.bindPopup(`<div class = "marker">
@@ -311,7 +390,8 @@ class App extends React.Component {
             let latLong = this.getCenterGeoJson(feature);
 
             //op deze center voeg een marker toe
-            this.addMarker(feature, latLong).addTo(this.markerGroup);
+            // this.addMarker(feature, latLong).addTo(this.markerGroup);
+            this.markerGroup.addLayer(this.makeMarker(feature, latLong));
 
             //laat de pop up zien als je erover gaat
             layer.on('mouseover', (e) => {
@@ -906,6 +986,8 @@ class App extends React.Component {
                     objectsOverLayedOnMap={this.state.objectsOverLayedOnMap}
                     getHexFromColor={this.getHexFromColor}
                 />
+
+                <ToastContainer />
             </section>
         )
     }

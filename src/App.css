@@ -218,3 +218,13 @@ table{
   float: left;
 }
 
+.toast-background{
+  border-radius: 10px;
+  background: white;
+  color: black;
+}
+
+.toast-progress-bar{
+  background: skyblue;
+}
+
