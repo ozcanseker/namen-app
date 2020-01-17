@@ -3,7 +3,7 @@ import {queryEndpoint, queryBetterForType} from './CommunicatorSPARQL';
 
 let latestString;
 
-export async function getMatch(text,labsURL ,setResFromOutside) {
+export async function getMatch(text, labsURL, setResFromOutside) {
     //update eerst de laatst ingetype string
     latestString = text;
 
@@ -13,6 +13,8 @@ export async function getMatch(text,labsURL ,setResFromOutside) {
     if (latestString !== text) {
         return undefined;
     } else if (res.status > 300) {
+        res = await res.text();
+        console.log(res);
         //bij een network error de string error
         return "error";
     }
@@ -33,7 +35,7 @@ export async function getMatch(text,labsURL ,setResFromOutside) {
 async function makeSearchScreenResults(results, labsURL) {
     results = results.hits.hits;
 
-    if(results.length === 0){
+    if (results.length === 0) {
         return [];
     }
 
@@ -61,7 +63,64 @@ async function makeSearchScreenResults(results, labsURL) {
  * @returns {Promise<Response>}
  */
 async function queryESDLK(query) {
-    return await fetch(`https://api.labs.kadaster.nl/datasets/kadaster/brt/services/search/search?query=${query}`, {
-        method: 'GET'
+    query = {
+        "query": {
+            "dis_max": {
+                "queries": [
+                    {
+                        "fuzzy": {
+                            "http://brt basisregistraties overheid nl/def/top10nl#naam": query
+                        }
+                    },
+                    {
+                        "fuzzy": {
+                            "http://brt.basisregistraties.overheid.nl/def/top10nl#naamNL": query
+                        }
+                    },
+                    {
+                        "fuzzy": {
+                            "http://brt.basisregistraties.overheid.nl/def/top10nl#naamOfficieel": query
+                        }
+                    },
+                    {
+                        "fuzzy": {
+                            "http://brt.basisregistraties.overheid.nl/def/top10nl#naamFries": query
+                        }
+                    },
+                    {
+                        "fuzzy": {
+                            "http://brt.basisregistraties.overheid.nl/def/top10nl#sluisnaam": query
+                        }
+                    },
+                    {
+                        "fuzzy": {
+                            "http://brt.basisregistraties.overheid.nl/def/top10nl#knooppuntnaam": query
+                        }
+                    },
+                    {
+                        "fuzzy": {
+                            "http://brt.basisregistraties.overheid.nl/def/top10nl#brugnaam": query
+                        }
+                    },
+                    {
+                        "fuzzy": {
+                            "http://brt.basisregistraties.overheid.nl/def/top10nl#tunnelnaam": query
+                        }
+                    }
+                ]
+            }
+        },
+        "size": 4000
+    };
+    query = JSON.stringify(query);
+
+    console.log(query);
+
+    return await fetch(`https://api.test.triply.cc/datasets/laurensrietveld/apeldoorn-brt/services/apeldoorn-brt/search`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: query
     });
 }
