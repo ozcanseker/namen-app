@@ -935,11 +935,12 @@ class App extends React.Component {
                         this.handleDeleteClick();
                     }}>
                         <div className="header">
-                            <h1>Topo Namenzoeker</h1><img src={KadasterImg} alt="kadaster logo"/>
+                            <h1>Toponamenzoeker</h1><img src={KadasterImg} alt="kadaster logo"/>
                         </div>
                     </Link>
                     <div className="searchBar">
                         <Search input={{fluid: true}}
+                                placeholder="Typ hier de naam in die je zoekt"
                                 value={this.state.results.getRightClickedRes().length > 1 ? "[ Kaartresultaten worden getoond ]" : this.state.searchQuery}
                                 noResultsMessage="Geen resultaat"
                                 icon={icon}
