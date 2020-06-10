@@ -10,7 +10,7 @@ run();
 async function run(){
     let classes = [];
 
-    let results = await queryPDOK(queryForSubclassOne());
+    let results = await queryBRT(queryForSubclassOne());
     results = await results.text();
     results = JSON.parse(results);
 
@@ -22,7 +22,7 @@ async function run(){
         let value = results[i].obj.value;
         subClassesArray.push(value);
 
-        let results2 = await queryPDOK(querySubSubClass(value));
+        let results2 = await queryBRT(querySubSubClass(value));
         results2 = await results2.text();
         results2 = JSON.parse(results2);
         results2 = results2.results.bindings;
@@ -63,8 +63,8 @@ function stripUrlToType(url) {
     return url.replace(/.*#/, "");
 }
 
-async function queryPDOK(query) {
-    return await fetch("https://data.pdok.nl/sparql", {
+async function queryBRT(query) {
+    return await fetch("https://api.labs.kadaster.nl/datasets/kadaster/brt/services/brt/sparql", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/sparql-query',

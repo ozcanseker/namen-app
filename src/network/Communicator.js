@@ -7,7 +7,7 @@ import * as ClickedCommunicator from './Communicators/ClickedCommunicator';
 import * as CommunicatorELASTICSEARCH from "./Communicators/CommunicatorELASTICSEARCH";
 
 const labsURL = "https://api.labs.kadaster.nl/datasets/kadaster/brt/services/brt/sparql";
-const pdokURL = "https://data.pdok.nl/sparql";
+const prodURL = "brt.basisregistraties.overheid.nl/sparql";
 
 /**
  * Laatste string waar op is gezocht
@@ -28,7 +28,7 @@ let latestMethod = "";
 export function getOptions() {
     return [
         {value: 'tsp', text: 'Kadaster Labs SPARQL', description: "snel"},
-        // {value: 'psp', text: 'PDOK SPARQL', description: "meest actueel"},
+        // {value: 'psp', text: 'BRT productie SPARQL', description: "meest actueel"},
         // {value: 'tes', text: 'Kadaster Labs Elasticsearch', description: "snelste"},
     ];
 }
@@ -50,7 +50,7 @@ export async function getMatch(text, method, setResFromOutside) {
     if (method === "tsp") {
         res = await CommunicatorSPARQL.getMatch(text, labsURL, setResFromOutside);
     } else if (method === "psp") {
-        res = await CommunicatorSPARQL.getMatch(text, pdokURL, setResFromOutside);
+        res = await CommunicatorSPARQL.getMatch(text, prodURL, setResFromOutside);
     } else {
         res = await CommunicatorELASTICSEARCH.getMatch(text, labsURL, setResFromOutside);
     }
@@ -76,7 +76,7 @@ export async function getAllAttribtes(clickedRes) {
     if (latestMethod === "tsp") {
         await CommunicatorSPARQL.getAllAttribtes(clickedRes, labsURL);
     } else if (latestMethod === "psp") {
-        await CommunicatorSPARQL.getAllAttribtes(clickedRes, pdokURL);
+        await CommunicatorSPARQL.getAllAttribtes(clickedRes, prodURL);
     } else {
         await CommunicatorSPARQL.getAllAttribtes(clickedRes, labsURL);
     }
