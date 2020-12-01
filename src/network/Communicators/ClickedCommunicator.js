@@ -256,8 +256,9 @@ function queryBetterForType(values) {
 function queryForCoordinatesNonStreets(top, left, bottom, righ) {
     return `PREFIX geo: <http://www.opengis.net/ont/geosparql#>
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
+            PREFIX bif: <http://www.openlinksw.com/schemas/bif#>
 
-            select distinct ?sub{
+            select distinct ?sub ?xShape{
             {
                 ?sub brt:naam ?label;
                  geo:hasGeometry/geo:asWKT ?xShape.
@@ -271,13 +272,12 @@ function queryForCoordinatesNonStreets(top, left, bottom, righ) {
                 ?sub brt:naamOfficieel ?label;
                      geo:hasGeometry/geo:asWKT ?xShape.
               }
-                BIND(bif:st_geomfromtext("POLYGON ((${left} ${bottom}, ${left} ${top}, ${righ} ${top}, ${righ} ${bottom}))") as ?yShape).
-                filter(bif:st_intersects(?xShape, ?yShape))
-                filter not exists{
-                    ?sub a brt:Wegdeel
-                }
-            }
-            limit 300
+              	filter(bif:st_within("Point(${left} ${bottom})"^^geo:wktLiteral, ?xShape, 1.0))
+			    filter not exists{
+			        ?sub a brt:Wegdeel
+			    }
+			}
+			limit 300
             `
 }
 
@@ -292,8 +292,9 @@ function queryForCoordinatesNonStreets(top, left, bottom, righ) {
 function queryForCoordinatesStreets(top, left, bottom, righ) {
     return `PREFIX geo: <http://www.opengis.net/ont/geosparql#>
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
+			PREFIX bif: <http://www.openlinksw.com/schemas/bif#>
 
-            select distinct ?sub{
+            select distinct ?sub ?xShape{
             {
                 ?sub brt:naam ?label;
                  geo:hasGeometry/geo:asWKT ?xShape;
@@ -311,9 +312,8 @@ function queryForCoordinatesStreets(top, left, bottom, righ) {
                      geo:hasGeometry/geo:asWKT ?xShape;
                      a brt:Wegdeel.
               }
-                BIND(bif:st_geomfromtext("POLYGON ((${left} ${bottom}, ${left} ${top}, ${righ} ${top}, ${righ} ${bottom}))") as ?yShape).
-                filter(bif:st_intersects(?xShape, ?yShape))
-                
+                filter(bif:st_within("Point(${left} ${bottom})"^^geo:wktLiteral, ?xShape, 1.0))
+			    
             }
             limit 150
             `
