@@ -1,7 +1,7 @@
 # Brt namen app  
 Dit is een applicatie die objecten uit de brt haalt op basis van naam. Deze toont de applicatie hierna op de kaart.
 
-## Gebruikshandleiding
+## Gebruikershandleiding
 De gebruiker kan op verschillende manieren data ophalen. De gebruiker kan op een naam zoeken of met de rechter muis knop op de kaart klikken.
 Ook kan de gebruiker van endpoint veranderen. Dit doet de gebruiker door links onderin op de tandwiel te klikken. Hier kan de gebruiker tussen verschillende
 endpoints kiezen. 
