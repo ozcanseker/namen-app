@@ -4,40 +4,40 @@ import * as PreProcessor from "../ProcessorMethods";
 import {clusterObjects, sortByGeoMetryAndName} from "../ProcessorMethods";
 
 /**
- * Haalt dingen op aan de hand van de gegeven coordinaten.
+ * Retrieves things from the given coordinates.
  *
- * @param lat waar geklikt is
- * @param long waar geklikt is
- * @param top van de kaart frame
- * @param left van de kaart frame
- * @param bottom van de kaart frame
+ * @param lat where clicked
+ * @param long where clicked
+ * @param top of the card frame
+ * @param left of the card frame
+ * @param bottom of the card frame
  * @param right van de kaart frame
- * @param setResFromOutside met deze methode kan je de resultaten van buiten de app zetten. Je moet wel "waiting" als string
- * terug geven.
- * @returns {Promise<string|[]>} of een string met "error" of "waiting". Of een array met res. Kan ook undefined.
+ * @param setResFromOutside with this method you can transfer the results from outside the app.You must have "waiting" as the string
+ * return.
+ * @returns {Promise<string|[]>} or a string with "error" or "waiting".Or an array with res.Can also be undefined.
  */
 export async function getFromCoordinates(lat, long, top, left, bottom, right, setResFromOutside) {
-    //check of de gebruiker te ver is uitgezoomd. Zet dan je eigen coordinaten.
+    // check if the user is zoomed out too far.Then put your own coordinates.
     if (right - left > 0.05 || top - bottom > 0.0300) {
         left = long - 0.025;
         right = long + 0.025;
         top = lat + 0.01500;
         bottom = lat - 0.01500;
     }
-
-    //haal alle niet straten op.
+    //console.log(top,left,bottom,right,lat,long);
+    //pick up all not streets.
     let nonstreets = await queryTriply(queryForCoordinatesNonStreets(top, left, bottom, right));
-
+    //console.log(nonstreets);
     if (nonstreets.status > 300) {
-        //bij een network error de string error
+        // in case of a network error the string error
         return "error";
     }
 
-    //Zet deze om in een array met Resultaat.js
+    //Convert these to an array with Resultaat.js
     nonstreets = await nonstreets.text();
     nonstreets = await makeSearchScreenResults(JSON.parse(nonstreets));
 
-    //De straten worden in een kleinere straal opgehaald dus doe hier de berekeningen.
+    //The streets are fetched in a smaller radius so do the calculations here.
     let stop = lat - 0.0022804940130103546;//((top - bottom) / 2) * factor;
     let sbottom = lat + 0.0022804940130103546;//((top - bottom) / 2) * factor;
     let sright = long + 0.0033634901046750002;//((right - left) / 2) * factor;
@@ -45,21 +45,21 @@ export async function getFromCoordinates(lat, long, top, left, bottom, right, se
 
     let streets = await queryTriply(queryForCoordinatesStreets(stop, sleft, sbottom, sright));
     if (streets.status > 300) {
-        //bij een network error de string error
+        // in case of a network error the string error
         return clusterObjects(nonstreets, undefined, setResFromOutside);
     }
 
-    //Zet deze om in een array met Resultaat.js
+    // Convert these to an array with Result.js
     streets = await streets.text();
     streets = await makeSearchScreenResults(JSON.parse(streets));
 
-    //voeg de resultaten samen en cluster de waterlopen en straten.
+    //merge the results and cluster the waterways and streets.
     nonstreets = mergeResults(streets, nonstreets);
     return clusterObjects(nonstreets, undefined, setResFromOutside);
 }
 
 /**
- * Voeg resultaten samen door de uris met elkaar te vergelijken.
+ * Pool results by comparing the uris.
  * @param exact
  * @param regex
  * @returns {any[] | string}
@@ -76,7 +76,7 @@ function mergeResults(exact, regex) {
 }
 
 /**
- * Zet de sparql json resulaten om in een Resultaat.js array
+ * Convert the sparql json results into a Result.js array
  * @param results
  * @returns {Promise<string|[]>}
  */
@@ -84,7 +84,7 @@ async function makeSearchScreenResults(results) {
     results = results.results.bindings;
     let returnObject = [];
 
-    //maak de query
+    //create the query
     let string = "";
     for (let i = 0; i < results.length; i++) {
         string += `<${results[i].sub.value}>`;
@@ -93,17 +93,17 @@ async function makeSearchScreenResults(results) {
     let res = await queryTriply(queryBetterForType(string));
 
     if (res.status > 300) {
-        //bij een network error, lege array
+        // in case of a network error, empty array
         return [];
     }
 
-    //verwerk de query
+    //process query
     res = await res.text();
     res = JSON.parse(res);
     res = res.results.bindings;
 
-    // De query zorgt ervoor dat meerdere keren hetzelfde object wordt terug gegeven. Hierdoor moet je ze bij elkaar rapen
-    // De key voor de map is de linked data url
+    // The query ensures that the same object is returned several times.Because of this you have to collect them
+    // The key for the folder is the linked data url
     let map = new Map();
 
     for (let i = 0; i < res.length; i++) {
@@ -117,13 +117,13 @@ async function makeSearchScreenResults(results) {
     }
 
     /**
-     * Voor elke object
+     * For any object
      */
     map.forEach((valueMap, key, map) => {
         let naam, type, geoJson, color, objectClass;
 
-        //dit sorteert de resultaten op gemeomety en dan naam.
-        //dus bijv Polygoon voor linestring
+        // this sorts the results by gemeomety and then name.
+        // so eg Polygon for linestring
         sortByGeoMetryAndName(valueMap);
 
         let fO = valueMap[0];
@@ -199,8 +199,8 @@ async function makeSearchScreenResults(results) {
 }
 
 /**
- * Dit is een methode die het sparql endpoint van triply queriet.
- * @param query string met query
+ * This is a method that querites the sparql endpoint from triply.
+ * @param query stringMetQuery
  * @returns {Promise<Response>}
  */
 async function queryTriply(query) {
@@ -246,7 +246,7 @@ function queryBetterForType(values) {
 }
 
 /**
- * Query die aan de hand van coordinaten niet straten ophaalt.
+ * Query that does not retrieve streets based on coordinates.
  * @param top
  * @param left
  * @param bottom
@@ -256,6 +256,7 @@ function queryBetterForType(values) {
 function queryForCoordinatesNonStreets(top, left, bottom, righ) {
     return `PREFIX geo: <http://www.opengis.net/ont/geosparql#>
             PREFIX brt: <http://brt.basisregistraties.overheid.nl/def/top10nl#>
+            prefix bif: <http://www.openlinksw.com/schemas/bif#>
 
             select distinct ?sub{
             {
@@ -271,8 +272,10 @@ function queryForCoordinatesNonStreets(top, left, bottom, righ) {
                 ?sub brt:naamOfficieel ?label;
                      geo:hasGeometry/geo:asWKT ?xShape.
               }
-                BIND(bif:st_geomfromtext("POLYGON ((${left} ${bottom}, ${left} ${top}, ${righ} ${top}, ${righ} ${bottom}))") as ?yShape).
+                BIND(bif:st_geomfromtext("POLYGON ((${left} ${bottom}, ${left} ${top}, ${righ} ${top}, ${righ} ${bottom},${left} ${bottom}))") as ?yShape).
                 filter(bif:st_intersects(?xShape, ?yShape))
+                
+                
                 filter not exists{
                     ?sub a brt:Wegdeel
                 }
@@ -282,7 +285,7 @@ function queryForCoordinatesNonStreets(top, left, bottom, righ) {
 }
 
 /**
- * Query die aan de hand van coordinaten straten ophaalt.
+ * Query that retrieves streets based on coordinates.
  * @param top
  * @param left
  * @param bottom
@@ -311,7 +314,7 @@ function queryForCoordinatesStreets(top, left, bottom, righ) {
                      geo:hasGeometry/geo:asWKT ?xShape;
                      a brt:Wegdeel.
               }
-                BIND(bif:st_geomfromtext("POLYGON ((${left} ${bottom}, ${left} ${top}, ${righ} ${top}, ${righ} ${bottom}))") as ?yShape).
+                BIND(bif:st_geomfromtext("POLYGON ((${left} ${bottom}, ${left} ${top}, ${righ} ${top}, ${righ} ${bottom},${righ} ${bottom}))") as ?yShape).
                 filter(bif:st_intersects(?xShape, ?yShape))
                 
             }
